@@ -1,0 +1,17 @@
+[package]
+name = "rltbl_db_benchmark"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+async-trait = "0.1.89"
+clap = "4.6.1"
+indexmap = { version = "2.12.0" }
+rlt = "0.5.0"
+tokio = { version = "1.52.3", features = ["full"] }
+rltbl_db = { git = "https://github.com/rltbl/rltbl_db", branch = "main" }
+
+[[bin]]
+name = "rltbl_db_benchmark"
+path = "src/main.rs"
