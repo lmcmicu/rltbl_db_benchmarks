@@ -41,7 +41,7 @@ impl StatelessBenchSuite for BenchmarkExample1 {
         .await
         .unwrap();
 
-        let _: Vec<DbRow> = pool.query("SELECT 1 FROM test1", ()).await.unwrap();
+        pool.query("SELECT 1 FROM test1", ()).await.unwrap();
 
         thread::sleep(Duration::from_millis(100));
 

@@ -1853,7 +1853,7 @@ dependencies = [
 [[package]]
 name = "rltbl_db"
 version = "0.1.0"
-source = "git+https://github.com/rltbl/rltbl_db?branch=main#e241edab0e5cf038bd23b17d5c554001f998f181"
+source = "git+https://github.com/rltbl/rltbl_db?branch=add-db-type#9f765a8a6dee44662aad301f4eadd895c9d12331"
 dependencies = [
  "async-trait",
  "bytes",
