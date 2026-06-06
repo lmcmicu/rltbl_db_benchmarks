@@ -15,6 +15,9 @@ struct Opts {
     #[clap(default_value = "sqlite")]
     kind: String,
 
+    #[clap(default_value = "none")]
+    strategy: String,
+
     #[clap(long, default_value = "25")]
     edit_rate: usize,
 
@@ -64,34 +67,32 @@ async fn caching_performance(opts: &Opts) {
     }
 
     pool.set_cache_aware_query(true);
-    for strategy in ["none", "truncate_all", "truncate", "trigger", "memory:1000"] {
-        pool.set_caching_strategy(&CachingStrategy::from_str(strategy).unwrap());
+    pool.set_caching_strategy(&CachingStrategy::from_str(&opts.strategy).unwrap());
 
-        let this_test = "Caching Performance Test -";
-        println!(
-            "{this_test} Starting test with db kind '{}' and strategy '{}'.",
-            pool.kind(),
-            pool.get_caching_strategy()
-        );
+    let this_test = "Caching Performance Test -";
+    println!(
+        "{this_test} Starting test with db kind '{}' and strategy '{}'.",
+        pool.kind(),
+        pool.get_caching_strategy()
+    );
 
-        rlt::cli::run(
-            opts.bench.clone(),
-            CachingPerformance {
-                pool: pool.clone(),
-                tables: tables_to_choose_from
-                    .clone()
-                    .into_iter()
-                    .map(|s| s.to_string())
-                    .collect::<Vec<_>>(),
-                edit_rate: opts.edit_rate,
-            },
-        )
-        .await
-        .unwrap();
+    rlt::cli::run(
+        opts.bench.clone(),
+        CachingPerformance {
+            pool: pool.clone(),
+            tables: tables_to_choose_from
+                .clone()
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>(),
+            edit_rate: opts.edit_rate,
+        },
+    )
+    .await
+    .unwrap();
 
-        // Output a blank line to make the overall output more readable:
-        println!("");
-    }
+    // Output a blank line to make the overall output more readable:
+    println!("");
 
     // Clean up:
     for table in &tables_to_choose_from {
