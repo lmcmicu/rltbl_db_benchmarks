@@ -11,7 +11,7 @@ caching:
 		--noise-threshold 5 \
 		--warmup 100 \
 		--fail-on-regression \
-		--regression-metrics iters-rate latency-mean latency-median \
+		--regression-metrics iters-rate,latency-mean,latency-median \
 		--baseline-file baselines/sqlite-none-v0.1.0.json
 	cargo run --release -- sqlite truncate_all \
 		--collector silent \
@@ -19,7 +19,7 @@ caching:
 		--noise-threshold 5 \
 		--warmup 100 \
 		--fail-on-regression \
-		--regression-metrics latency-mean latency-mean latency-median \
+		--regression-metrics iters-rate,latency-mean,latency-median \
 		--baseline-file baselines/sqlite-truncate_all-v0.1.0.json
 	cargo run --release -- sqlite truncate \
 		--collector silent \
@@ -27,7 +27,7 @@ caching:
 		--noise-threshold 5 \
 		--warmup 100 \
 		--fail-on-regression \
-		--regression-metrics latency-mean latency-mean latency-median \
+		--regression-metrics iters-rate,latency-mean,latency-median \
 		--baseline-file baselines/sqlite-truncate-v0.1.0.json
 	cargo run --release -- sqlite trigger \
 		--collector silent \
@@ -35,7 +35,7 @@ caching:
 		--noise-threshold 5 \
 		--warmup 100 \
 		--fail-on-regression \
-		--regression-metrics latency-mean latency-mean latency-median \
+		--regression-metrics iters-rate,latency-mean,latency-median \
 		--baseline-file baselines/sqlite-trigger-v0.1.0.json
 	cargo run --release -- sqlite "memory:1000" \
 		--collector silent \
@@ -43,7 +43,7 @@ caching:
 		--noise-threshold 5 \
 		--warmup 100 \
 		--fail-on-regression \
-		--regression-metrics latency-mean latency-mean latency-median \
+		--regression-metrics iters-rate,latency-mean,latency-median \
 		--baseline-file baselines/sqlite-memory-v0.1.0.json
 	cargo run --release -- postgresql none \
 		--collector silent \
@@ -51,7 +51,7 @@ caching:
 		--noise-threshold 5 \
 		--warmup 100 \
 		--fail-on-regression \
-		--regression-metrics latency-mean latency-mean latency-median \
+		--regression-metrics iters-rate,latency-mean,latency-median \
 		--baseline-file baselines/postgresql-none-v0.1.0.json
 	cargo run --release -- postgresql truncate_all \
 		--collector silent \
@@ -59,7 +59,7 @@ caching:
 		--noise-threshold 5 \
 		--warmup 100 \
 		--fail-on-regression \
-		--regression-metrics latency-mean latency-mean latency-median \
+		--regression-metrics iters-rate,latency-mean,latency-median \
 		--baseline-file baselines/postgresql-truncate_all-v0.1.0.json
 	cargo run --release -- postgresql truncate \
 		--collector silent \
@@ -67,7 +67,7 @@ caching:
 		--noise-threshold 5 \
 		--warmup 100 \
 		--fail-on-regression \
-		--regression-metrics latency-mean latency-mean latency-median \
+		--regression-metrics iters-rate,latency-mean,latency-median \
 		--baseline-file baselines/postgresql-truncate-v0.1.0.json
 	cargo run --release -- postgresql trigger \
 		--collector silent \
@@ -75,7 +75,7 @@ caching:
 		--noise-threshold 5 \
 		--warmup 100 \
 		--fail-on-regression \
-		--regression-metrics latency-mean latency-mean latency-median \
+		--regression-metrics iters-rate,latency-mean,latency-median \
 		--baseline-file baselines/postgresql-trigger-v0.1.0.json
 	cargo run --release -- postgresql "memory:1000" \
 		--collector silent \
@@ -83,7 +83,7 @@ caching:
 		--noise-threshold 5 \
 		--warmup 100 \
 		--fail-on-regression \
-		--regression-metrics latency-mean latency-mean latency-median \
+		--regression-metrics iters-rate,latency-mean,latency-median \
 		--baseline-file baselines/postgresql-memory-v0.1.0.json
 
 save_baselines:
