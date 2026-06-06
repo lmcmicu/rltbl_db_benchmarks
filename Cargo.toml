@@ -8,10 +8,11 @@ anyhow = "1.0.102"
 async-trait = "0.1.89"
 clap = "4.6.1"
 indexmap = { version = "2.12.0" }
+rand = "0.10.1"
 rlt = "0.5.0"
+# TODO: Get this dependency from crates.io:
+rltbl_db = { path = "../rltbl_db" }
 tokio = { version = "1.52.3", features = ["full"] }
-# TODO: Change the branch to main.
-rltbl_db = { git = "https://github.com/rltbl/rltbl_db", branch = "add-db-type" }
 
 [[bin]]
 name = "rltbl_db_benchmark"

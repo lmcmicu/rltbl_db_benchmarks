@@ -1853,7 +1853,6 @@ dependencies = [
 [[package]]
 name = "rltbl_db"
 version = "0.1.0"
-source = "git+https://github.com/rltbl/rltbl_db?branch=add-db-type#9f765a8a6dee44662aad301f4eadd895c9d12331"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1879,6 +1878,7 @@ dependencies = [
  "async-trait",
  "clap",
  "indexmap",
+ "rand 0.10.1",
  "rlt",
  "rltbl_db",
  "tokio",
