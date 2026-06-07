@@ -5,10 +5,7 @@ use rltbl_db::{
     core::{CachingStrategy, DbQuery},
     db_kind::DbKind,
 };
-use std::{
-    str::FromStr,
-    time::Instant,
-};
+use std::{str::FromStr, time::Instant};
 
 mod caching_performance;
 use caching_performance::CachingPerformance;
@@ -26,6 +23,19 @@ struct Opts {
 
     #[command(flatten)]
     bench: BenchCli,
+}
+
+struct CachingTotalsBaselines {
+    sqlite_none: u64,
+    postgresql_none: u64,
+    sqlite_truncate_all: u64,
+    postgresql_truncate_all: u64,
+    sqlite_truncate: u64,
+    postgresql_truncate: u64,
+    sqlite_trigger: u64,
+    postgresql_trigger: u64,
+    sqlite_memory: u64,
+    postgresql_memory: u64,
 }
 
 /// TODO: Add docstring.
@@ -98,50 +108,91 @@ async fn caching_performance(opts: &Opts) {
 
     // Check that the overall running time is no longer than our threshold:
     let elapsed = now.elapsed().as_secs();
+
+    let baselines = CachingTotalsBaselines {
+        sqlite_none: 150,
+        postgresql_none: 90,
+        sqlite_truncate_all: 60,
+        postgresql_truncate_all: 40,
+        sqlite_truncate: 50,
+        postgresql_truncate: 40,
+        sqlite_trigger: 10,
+        postgresql_trigger: 10,
+        sqlite_memory: 10,
+        postgresql_memory: 10,
+    };
+
     match pool.get_caching_strategy() {
         CachingStrategy::None => match pool.kind() {
-            DbKind::SQLite if elapsed > 150 => {
-                panic!("Taking longer than 150s. Timing out");
-            },
-            DbKind::PostgreSQL if elapsed > 90 => {
-                panic!("Taking longer than 90s. Timing out");
-            },
+            DbKind::SQLite if elapsed > baselines.sqlite_none => {
+                panic!("Taking longer than {}s. Timing out", baselines.sqlite_none);
+            }
+            DbKind::PostgreSQL if elapsed > baselines.postgresql_none => {
+                panic!(
+                    "Taking longer than {}s. Timing out",
+                    baselines.postgresql_none
+                );
+            }
             _ => (),
         },
         CachingStrategy::TruncateAll => match pool.kind() {
-            DbKind::SQLite if elapsed > 60 => {
-                panic!("Taking longer than 60s. Timing out");
-            },
-            DbKind::PostgreSQL if elapsed > 40 => {
-                panic!("Taking longer than 40s. Timing out");
-            },
+            DbKind::SQLite if elapsed > baselines.sqlite_truncate_all => {
+                panic!(
+                    "Taking longer than {}s. Timing out",
+                    baselines.sqlite_truncate
+                );
+            }
+            DbKind::PostgreSQL if elapsed > baselines.postgresql_truncate_all => {
+                panic!(
+                    "Taking longer than {}s. Timing out",
+                    baselines.postgresql_truncate
+                );
+            }
             _ => (),
         },
         CachingStrategy::Truncate => match pool.kind() {
-            DbKind::SQLite if elapsed > 50 => {
-                panic!("Taking longer than 50s. Timing out");
-            },
-            DbKind::PostgreSQL if elapsed > 40 => {
-                panic!("Taking longer than 40s. Timing out");
-            },
+            DbKind::SQLite if elapsed > baselines.sqlite_truncate => {
+                panic!(
+                    "Taking longer than {}s. Timing out",
+                    baselines.sqlite_truncate
+                );
+            }
+            DbKind::PostgreSQL if elapsed > baselines.postgresql_truncate => {
+                panic!(
+                    "Taking longer than {}s. Timing out",
+                    baselines.postgresql_truncate
+                );
+            }
             _ => (),
         },
         CachingStrategy::Trigger => match pool.kind() {
-            DbKind::SQLite if elapsed > 10 => {
-                panic!("Taking longer than 10s. Timing out");
-            },
-            DbKind::PostgreSQL if elapsed > 10 => {
-                panic!("Taking longer than 10s. Timing out");
-            },
+            DbKind::SQLite if elapsed > baselines.sqlite_trigger => {
+                panic!(
+                    "Taking longer than {}s. Timing out",
+                    baselines.sqlite_trigger
+                );
+            }
+            DbKind::PostgreSQL if elapsed > baselines.postgresql_trigger => {
+                panic!(
+                    "Taking longer than {}s. Timing out",
+                    baselines.postgresql_trigger
+                );
+            }
             _ => (),
         },
         CachingStrategy::Memory(_) => match pool.kind() {
-            DbKind::SQLite if elapsed > 10 => {
-                panic!("Taking longer than 10s. Timing out");
-            },
-            DbKind::PostgreSQL if elapsed > 10 => {
-                panic!("Taking longer than 10s. Timing out");
-            },
+            DbKind::SQLite if elapsed > baselines.sqlite_memory => {
+                panic!(
+                    "Taking longer than {}s. Timing out",
+                    baselines.sqlite_memory
+                );
+            }
+            DbKind::PostgreSQL if elapsed > baselines.postgresql_memory => {
+                panic!(
+                    "Taking longer than {}s. Timing out",
+                    baselines.postgresql_memory
+                );
+            }
             _ => (),
         },
     };
