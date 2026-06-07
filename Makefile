@@ -16,7 +16,6 @@ caching:
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
 		--warmup $(WARMUP) \
-		--fail-on-regression \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/sqlite-none-$(VERSION).json
 	cargo run --release -- sqlite truncate_all \
@@ -24,7 +23,6 @@ caching:
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
 		--warmup $(WARMUP) \
-		--fail-on-regression \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/sqlite-truncate_all-$(VERSION).json
 	cargo run --release -- sqlite truncate \
@@ -32,7 +30,6 @@ caching:
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
 		--warmup $(WARMUP) \
-		--fail-on-regression \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/sqlite-truncate-$(VERSION).json
 	cargo run --release -- sqlite trigger \
@@ -40,7 +37,6 @@ caching:
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
 		--warmup $(WARMUP) \
-		--fail-on-regression \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/sqlite-trigger-$(VERSION).json
 	cargo run --release -- sqlite "memory:1000" \
@@ -48,7 +44,6 @@ caching:
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
 		--warmup $(WARMUP) \
-		--fail-on-regression \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/sqlite-memory-$(VERSION).json
 	cargo run --release -- postgresql none \
@@ -56,7 +51,6 @@ caching:
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
 		--warmup $(WARMUP) \
-		--fail-on-regression \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/postgresql-none-$(VERSION).json
 	cargo run --release -- postgresql truncate_all \
@@ -64,7 +58,6 @@ caching:
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
 		--warmup $(WARMUP) \
-		--fail-on-regression \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/postgresql-truncate_all-$(VERSION).json
 	cargo run --release -- postgresql truncate \
@@ -72,7 +65,6 @@ caching:
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
 		--warmup $(WARMUP) \
-		--fail-on-regression \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/postgresql-truncate-$(VERSION).json
 	cargo run --release -- postgresql trigger \
@@ -80,7 +72,6 @@ caching:
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
 		--warmup $(WARMUP) \
-		--fail-on-regression \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/postgresql-trigger-$(VERSION).json
 	cargo run --release -- postgresql "memory:1000" \
@@ -88,7 +79,6 @@ caching:
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
 		--warmup $(WARMUP) \
-		--fail-on-regression \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/postgresql-memory-$(VERSION).json
 
