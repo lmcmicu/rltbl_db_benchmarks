@@ -13,14 +13,14 @@ use caching_performance::CachingPerformance;
 #[derive(Parser, Clone)]
 struct Opts {
     #[clap(subcommand)]
-    command: Commands,
+    command: Subcommands,
 
     #[command(flatten)]
     bench: BenchCli,
 }
 
 #[derive(Clone, Subcommand)]
-enum Commands {
+enum Subcommands {
     Caching {
         #[clap(default_value = "sqlite")]
         kind: String,
@@ -33,6 +33,7 @@ enum Commands {
     },
 }
 
+// Useful struct for validating the total times of the caching performance tests.
 struct CachingTotalsBaselines {
     sqlite_none: u64,
     postgresql_none: u64,
@@ -48,13 +49,12 @@ struct CachingTotalsBaselines {
 
 async fn caching_performance(opts: &Opts) {
     let (kind, strategy, edit_rate) = match &opts.command {
-        Commands::Caching {
+        Subcommands::Caching {
             kind,
             strategy,
             edit_rate,
         } => (kind, strategy, edit_rate),
     };
-
     let mut pool = {
         let kind = DbKind::from_str(&kind.as_str()).expect("Error reading database kind");
         let url = match kind {
@@ -63,7 +63,6 @@ async fn caching_performance(opts: &Opts) {
         };
         AnyPool::connect(url).await.unwrap()
     };
-
     let tables_to_choose_from = ["alpha", "beta", "gamma", "delta"];
     for table in &tables_to_choose_from {
         pool.drop_table(table).await.unwrap();
@@ -93,13 +92,11 @@ async fn caching_performance(opts: &Opts) {
         .await
         .unwrap();
     }
-
     pool.set_cache_aware_query(true);
     pool.set_caching_strategy(&CachingStrategy::from_str(&strategy).unwrap());
 
-    let this_test = "Caching Performance Test -";
     println!(
-        "{this_test} Starting test with db kind '{}' and strategy '{}'.",
+        "Caching Performance Test - Starting test with db kind '{}' and strategy '{}'.",
         pool.kind(),
         pool.get_caching_strategy()
     );
@@ -142,73 +139,46 @@ async fn caching_performance(opts: &Opts) {
     match pool.get_caching_strategy() {
         CachingStrategy::None => match pool.kind() {
             DbKind::SQLite if elapsed > baselines.sqlite_none => {
-                panic!("Taking longer than {}s. Timing out", baselines.sqlite_none);
+                panic!("Took longer than {}s.", baselines.sqlite_none);
             }
             DbKind::PostgreSQL if elapsed > baselines.postgresql_none => {
-                panic!(
-                    "Taking longer than {}s. Timing out",
-                    baselines.postgresql_none
-                );
+                panic!("Took longer than {}s.", baselines.postgresql_none);
             }
             _ => (),
         },
         CachingStrategy::TruncateAll => match pool.kind() {
             DbKind::SQLite if elapsed > baselines.sqlite_truncate_all => {
-                panic!(
-                    "Taking longer than {}s. Timing out",
-                    baselines.sqlite_truncate
-                );
+                panic!("Took longer than {}s.", baselines.sqlite_truncate);
             }
             DbKind::PostgreSQL if elapsed > baselines.postgresql_truncate_all => {
-                panic!(
-                    "Taking longer than {}s. Timing out",
-                    baselines.postgresql_truncate
-                );
+                panic!("Took longer than {}s.", baselines.postgresql_truncate);
             }
             _ => (),
         },
         CachingStrategy::Truncate => match pool.kind() {
             DbKind::SQLite if elapsed > baselines.sqlite_truncate => {
-                panic!(
-                    "Taking longer than {}s. Timing out",
-                    baselines.sqlite_truncate
-                );
+                panic!("Took longer than {}s.", baselines.sqlite_truncate);
             }
             DbKind::PostgreSQL if elapsed > baselines.postgresql_truncate => {
-                panic!(
-                    "Taking longer than {}s. Timing out",
-                    baselines.postgresql_truncate
-                );
+                panic!("Took longer than {}s.", baselines.postgresql_truncate);
             }
             _ => (),
         },
         CachingStrategy::Trigger => match pool.kind() {
             DbKind::SQLite if elapsed > baselines.sqlite_trigger => {
-                panic!(
-                    "Taking longer than {}s. Timing out",
-                    baselines.sqlite_trigger
-                );
+                panic!("Took longer than {}s.", baselines.sqlite_trigger);
             }
             DbKind::PostgreSQL if elapsed > baselines.postgresql_trigger => {
-                panic!(
-                    "Taking longer than {}s. Timing out",
-                    baselines.postgresql_trigger
-                );
+                panic!("Took longer than {}s.", baselines.postgresql_trigger);
             }
             _ => (),
         },
         CachingStrategy::Memory(_) => match pool.kind() {
             DbKind::SQLite if elapsed > baselines.sqlite_memory => {
-                panic!(
-                    "Taking longer than {}s. Timing out",
-                    baselines.sqlite_memory
-                );
+                panic!("Took longer than {}s.", baselines.sqlite_memory);
             }
             DbKind::PostgreSQL if elapsed > baselines.postgresql_memory => {
-                panic!(
-                    "Taking longer than {}s. Timing out",
-                    baselines.postgresql_memory
-                );
+                panic!("Took longer than {}s.", baselines.postgresql_memory);
             }
             _ => (),
         },
@@ -227,6 +197,6 @@ async fn caching_performance(opts: &Opts) {
 async fn main() {
     let opts = Opts::parse();
     match &opts.command {
-        Commands::Caching { .. } => caching_performance(&opts).await,
+        Subcommands::Caching { .. } => caching_performance(&opts).await,
     }
 }
