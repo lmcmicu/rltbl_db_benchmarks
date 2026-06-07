@@ -130,7 +130,7 @@ async fn caching_performance(opts: &Opts) {
         sqlite_none: 150,
         postgresql_none: 100,
         sqlite_truncate_all: 60,
-        postgresql_truncate_all: 40,
+        postgresql_truncate_all: 45,
         sqlite_truncate: 50,
         postgresql_truncate: 40,
         sqlite_trigger: 10,
