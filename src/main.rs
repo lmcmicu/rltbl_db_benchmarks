@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use rlt::cli::BenchCli;
 use rltbl_db::{
     any::AnyPool,
@@ -12,17 +12,25 @@ use caching_performance::CachingPerformance;
 
 #[derive(Parser, Clone)]
 struct Opts {
-    #[clap(default_value = "sqlite")]
-    kind: String,
-
-    #[clap(default_value = "none")]
-    strategy: String,
-
-    #[clap(long, default_value = "25")]
-    edit_rate: usize,
+    #[clap(subcommand)]
+    command: Commands,
 
     #[command(flatten)]
     bench: BenchCli,
+}
+
+#[derive(Clone, Subcommand)]
+enum Commands {
+    Caching {
+        #[clap(default_value = "sqlite")]
+        kind: String,
+
+        #[clap(default_value = "none")]
+        strategy: String,
+
+        #[clap(long, default_value = "25")]
+        edit_rate: usize,
+    },
 }
 
 struct CachingTotalsBaselines {
@@ -40,8 +48,16 @@ struct CachingTotalsBaselines {
 
 /// TODO: Add docstring.
 async fn caching_performance(opts: &Opts) {
+    let (kind, strategy, edit_rate) = match &opts.command {
+        Commands::Caching {
+            kind,
+            strategy,
+            edit_rate,
+        } => (kind, strategy, edit_rate),
+    };
+
     let mut pool = {
-        let kind = DbKind::from_str(&opts.kind.as_str()).expect("Error reading database kind");
+        let kind = DbKind::from_str(&kind.as_str()).expect("Error reading database kind");
         let url = match kind {
             DbKind::SQLite => ":memory:",
             DbKind::PostgreSQL => "postgresql:///rltbl_db",
@@ -80,7 +96,7 @@ async fn caching_performance(opts: &Opts) {
     }
 
     pool.set_cache_aware_query(true);
-    pool.set_caching_strategy(&CachingStrategy::from_str(&opts.strategy).unwrap());
+    pool.set_caching_strategy(&CachingStrategy::from_str(&strategy).unwrap());
 
     let this_test = "Caching Performance Test -";
     println!(
@@ -100,7 +116,7 @@ async fn caching_performance(opts: &Opts) {
                 .into_iter()
                 .map(|s| s.to_string())
                 .collect::<Vec<_>>(),
-            edit_rate: opts.edit_rate,
+            edit_rate: *edit_rate,
         },
     )
     .await
@@ -208,12 +224,8 @@ async fn caching_performance(opts: &Opts) {
 
 #[tokio::main]
 async fn main() {
-    // TODO: Make the tests multi-threaded.
-
     let opts = Opts::parse();
-
-    // TODO: Currently there is only one benchmark test. Eventually, when we add more benchmarks,
-    // we should specify them as subcommands using command-line arguments in the definition
-    // of Opts above.
-    caching_performance(&opts).await;
+    match &opts.command {
+        Commands::Caching { .. } => caching_performance(&opts).await,
+    }
 }
