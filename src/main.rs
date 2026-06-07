@@ -46,7 +46,6 @@ struct CachingTotalsBaselines {
     postgresql_memory: u64,
 }
 
-/// TODO: Add docstring.
 async fn caching_performance(opts: &Opts) {
     let (kind, strategy, edit_rate) = match &opts.command {
         Commands::Caching {
@@ -105,8 +104,10 @@ async fn caching_performance(opts: &Opts) {
         pool.get_caching_strategy()
     );
 
+    // Mark the start time of the test:
     let now = Instant::now();
 
+    // Run the test:
     rlt::cli::run(
         opts.bench.clone(),
         CachingPerformance {
@@ -122,7 +123,7 @@ async fn caching_performance(opts: &Opts) {
     .await
     .unwrap();
 
-    // Check that the overall running time is no longer than our threshold:
+    // Check that the overall running time is no longer than the baselines defined below:
     let elapsed = now.elapsed().as_secs();
 
     let baselines = CachingTotalsBaselines {

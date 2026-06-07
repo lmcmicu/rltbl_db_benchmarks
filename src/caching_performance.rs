@@ -18,7 +18,6 @@ pub(crate) struct CachingPerformance {
 
 #[async_trait]
 impl StatelessBenchSuite for CachingPerformance {
-    /// TODO: Add docstring.
     async fn bench(&mut self, _: &IterInfo) -> Result<IterReport> {
         let start = Instant::now();
         self.perform_caching_detail().await;
@@ -34,7 +33,6 @@ impl StatelessBenchSuite for CachingPerformance {
 }
 
 impl CachingPerformance {
-    /// TODO: Add docstring.
     pub fn random_between(min: usize, max: usize, seed: &mut i64) -> usize {
         let between = Uniform::try_from(min..max).unwrap();
         let mut rng = if *seed < 0 {
@@ -46,12 +44,10 @@ impl CachingPerformance {
         between.sample(&mut rng)
     }
 
-    /// TODO: Add docstring.
     fn random_table<'a>(&self) -> String {
         self.tables[Self::random_between(0, self.tables.len(), &mut -1)].to_string()
     }
 
-    /// TODO: Add docstring.
     async fn perform_caching_detail(&self) {
         let select_table = self.random_table();
         self.pool
