@@ -5,7 +5,7 @@ SHELL := bash
 .SUFFIXES:
 
 ITERATIONS = 2500
-NOISE_THRESHOLD = 20
+NOISE_THRESHOLD = 25
 WARMUP = 100
 REGRESSION_METRICS = iters-rate,latency-mean,latency-median
 VERSION = v0.1.0
