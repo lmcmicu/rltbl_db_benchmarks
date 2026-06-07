@@ -6,7 +6,7 @@ SHELL := bash
 
 ITERATIONS = 2500
 NOISE_THRESHOLD = 25
-WARMUP = 100
+WARMUP = 10
 REGRESSION_METRICS = iters-rate,latency-mean,latency-median
 VERSION = v0.1.0
 
