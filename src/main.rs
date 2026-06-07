@@ -111,7 +111,7 @@ async fn caching_performance(opts: &Opts) {
 
     let baselines = CachingTotalsBaselines {
         sqlite_none: 150,
-        postgresql_none: 90,
+        postgresql_none: 100,
         sqlite_truncate_all: 60,
         postgresql_truncate_all: 40,
         sqlite_truncate: 50,

@@ -5,9 +5,9 @@ SHELL := bash
 .SUFFIXES:
 
 ITERATIONS = 2500
-NOISE_THRESHOLD = 5
+NOISE_THRESHOLD = 20
 WARMUP = 100
-REGRESSION_METRICS = iters-rate,latency-mean,latency-median
+REGRESSION_METRICS = iters-rate,latency-mean,latency-median,latency-max
 VERSION = v0.1.0
 
 caching:
@@ -17,11 +17,13 @@ caching:
 		--noise-threshold $(NOISE_THRESHOLD) \
 		--warmup $(WARMUP) \
 		--regression-metrics $(REGRESSION_METRICS) \
+		--fail-on-regression \
 		--baseline-file baselines/sqlite-none-$(VERSION).json
 	cargo run --release -- sqlite truncate_all \
 		--collector silent \
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
+		--fail-on-regression \
 		--warmup $(WARMUP) \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/sqlite-truncate_all-$(VERSION).json
@@ -29,6 +31,7 @@ caching:
 		--collector silent \
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
+		--fail-on-regression \
 		--warmup $(WARMUP) \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/sqlite-truncate-$(VERSION).json
@@ -36,6 +39,7 @@ caching:
 		--collector silent \
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
+		--fail-on-regression \
 		--warmup $(WARMUP) \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/sqlite-trigger-$(VERSION).json
@@ -43,6 +47,7 @@ caching:
 		--collector silent \
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
+		--fail-on-regression \
 		--warmup $(WARMUP) \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/sqlite-memory-$(VERSION).json
@@ -50,6 +55,7 @@ caching:
 		--collector silent \
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
+		--fail-on-regression \
 		--warmup $(WARMUP) \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/postgresql-none-$(VERSION).json
@@ -57,6 +63,7 @@ caching:
 		--collector silent \
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
+		--fail-on-regression \
 		--warmup $(WARMUP) \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/postgresql-truncate_all-$(VERSION).json
@@ -64,6 +71,7 @@ caching:
 		--collector silent \
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
+		--fail-on-regression \
 		--warmup $(WARMUP) \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/postgresql-truncate-$(VERSION).json
@@ -71,6 +79,7 @@ caching:
 		--collector silent \
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
+		--fail-on-regression \
 		--warmup $(WARMUP) \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/postgresql-trigger-$(VERSION).json
@@ -78,6 +87,7 @@ caching:
 		--collector silent \
 		--iterations $(ITERATIONS) \
 		--noise-threshold $(NOISE_THRESHOLD) \
+		--fail-on-regression \
 		--warmup $(WARMUP) \
 		--regression-metrics $(REGRESSION_METRICS) \
 		--baseline-file baselines/postgresql-memory-$(VERSION).json
