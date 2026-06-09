@@ -34,21 +34,22 @@ impl StatelessBenchSuite for CachingPerformance {
 }
 
 impl CachingPerformance {
-    pub fn random_between(min: usize, max: usize, seed: i64) -> usize {
+    pub fn random_between(min: usize, max: usize, seed: &mut i64) -> usize {
         let between = Uniform::try_from(min..max).unwrap();
-        let mut rng = if seed < 0 {
+        let mut rng = if *seed < 0 {
             StdRng::from_rng(&mut rand::rng())
         } else {
-            StdRng::seed_from_u64(seed as u64)
+            *seed += 10;
+            StdRng::seed_from_u64(*seed as u64)
         };
         between.sample(&mut rng)
     }
 
-    fn random_table<'a>(&self) -> String {
-        self.tables[Self::random_between(0, self.tables.len(), self.seed)].to_string()
+    fn random_table<'a>(&mut self) -> String {
+        self.tables[Self::random_between(0, self.tables.len(), &mut self.seed)].to_string()
     }
 
-    async fn perform_caching_detail(&self) {
+    async fn perform_caching_detail(&mut self) {
         let select_table = self.random_table();
         self.pool
             .cache(
@@ -57,7 +58,7 @@ impl CachingPerformance {
             )
             .await
             .unwrap();
-        if self.edit_rate != 0 && Self::random_between(0, self.edit_rate, self.seed) == 0 {
+        if self.edit_rate != 0 && Self::random_between(0, self.edit_rate, &mut self.seed) == 0 {
             let table_to_edit = self.random_table();
             self.pool
                 .execute(
