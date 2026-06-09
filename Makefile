@@ -6,15 +6,14 @@ SHELL := bash
 
 # Comment out CARGO_FLAGS to run dev target
 CARGO_FLAGS = --release
+SEED = 0
 ITERATIONS = 2500
-NOISE_THRESHOLD = 25
+NOISE_THRESHOLD = 5
 WARMUP = 10
-REGRESSION_METRICS = iters-rate,latency-mean,latency-median
 VERSION = v0.1.0
 
-COMMON_ARGS = --collector silent --iterations $(ITERATIONS) --warmup $(WARMUP)
+COMMON_ARGS = --seed $(SEED) --collector silent --iterations $(ITERATIONS) --warmup $(WARMUP)
 CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD) \
-		--regression-metrics $(REGRESSION_METRICS) \
 		--fail-on-regression
 BASELINE_ARGS = --baseline-dir caching_baselines
 

@@ -12,6 +12,9 @@ use caching_performance::CachingPerformance;
 
 #[derive(Parser, Clone)]
 struct Opts {
+    #[clap(long, default_value = "-1")]
+    seed: i64,
+
     #[clap(subcommand)]
     command: Subcommands,
 
@@ -48,6 +51,7 @@ struct CachingTotalsBaselines {
 }
 
 async fn caching_performance(opts: &Opts) {
+    let mut seed = opts.seed;
     let (kind, strategy, edit_rate) = match &opts.command {
         Subcommands::Caching {
             kind,
@@ -80,7 +84,7 @@ async fn caching_performance(opts: &Opts) {
         // Add a few tens of thousands of values to the table:
         let mut values = vec![];
         for i in 0..5 {
-            for j in 0..CachingPerformance::random_between(34000, 35000, &mut -1) {
+            for j in 0..CachingPerformance::random_between(34000, 35000, &mut seed) {
                 values.push(format!("({i}, {j})"));
             }
         }
@@ -108,6 +112,7 @@ async fn caching_performance(opts: &Opts) {
     rlt::cli::run(
         opts.bench.clone(),
         CachingPerformance {
+            seed: seed,
             pool: pool.clone(),
             tables: tables_to_choose_from
                 .clone()

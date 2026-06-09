@@ -11,6 +11,7 @@ use tokio::time::Instant;
 
 #[derive(Clone)]
 pub(crate) struct CachingPerformance {
+    pub(crate) seed: i64,
     pub(crate) pool: AnyPool,
     pub(crate) tables: Vec<String>,
     pub(crate) edit_rate: usize,
@@ -44,11 +45,11 @@ impl CachingPerformance {
         between.sample(&mut rng)
     }
 
-    fn random_table<'a>(&self) -> String {
-        self.tables[Self::random_between(0, self.tables.len(), &mut -1)].to_string()
+    fn random_table<'a>(&mut self) -> String {
+        self.tables[Self::random_between(0, self.tables.len(), &mut self.seed)].to_string()
     }
 
-    async fn perform_caching_detail(&self) {
+    async fn perform_caching_detail(&mut self) {
         let select_table = self.random_table();
         self.pool
             .cache(
@@ -57,7 +58,7 @@ impl CachingPerformance {
             )
             .await
             .unwrap();
-        if self.edit_rate != 0 && Self::random_between(0, self.edit_rate, &mut -1) == 0 {
+        if self.edit_rate != 0 && Self::random_between(0, self.edit_rate, &mut self.seed) == 0 {
             let table_to_edit = self.random_table();
             self.pool
                 .execute(
