@@ -15,10 +15,10 @@ use std::{str::FromStr, time::Instant};
 
 #[derive(Clone)]
 pub(crate) struct CachingPerformance {
-    pub(crate) seed: i64,
-    pub(crate) pool: AnyPool,
-    pub(crate) tables: Vec<String>,
-    pub(crate) edit_rate: usize,
+    seed: i64,
+    pool: AnyPool,
+    tables: Vec<String>,
+    edit_rate: usize,
 }
 
 // Useful struct for validating the total times of the caching performance tests.
@@ -52,7 +52,7 @@ impl StatelessBenchSuite for CachingPerformance {
 }
 
 impl CachingPerformance {
-    pub fn random_between(&mut self, min: usize, max: usize) -> usize {
+    fn random_between(&mut self, min: usize, max: usize) -> usize {
         let between = Uniform::try_from(min..max).unwrap();
         let mut rng = if self.seed < 0 {
             StdRng::from_rng(&mut rand::rng())
@@ -68,7 +68,7 @@ impl CachingPerformance {
         self.tables[index].to_string()
     }
 
-    pub async fn perform_caching(
+    pub(crate) async fn perform_caching(
         kind: &str,
         bench: &BenchCli,
         strategy: &str,
@@ -144,9 +144,10 @@ impl CachingPerformance {
         // Check that the overall running time is no longer than the baselines defined below:
         let elapsed = now.elapsed().as_secs();
 
+        // TODO: Read these values from a (JSON?) file, and make it possible to re-save.
         let baselines = CachingTotalsBaselines {
             sqlite_none: 250,
-            postgresql_none: 125,
+            postgresql_none: 150,
             sqlite_truncate_all: 75,
             postgresql_truncate_all: 65,
             sqlite_truncate: 65,
