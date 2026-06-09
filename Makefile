@@ -9,7 +9,7 @@ CARGO_FLAGS = --release
 SEED = 0
 ITERATIONS = 2500
 NOISE_THRESHOLD = 5
-WARMUP = 10
+WARMUP = 100
 VERSION = v0.1.0
 
 COMMON_ARGS = --seed $(SEED) --collector silent --iterations $(ITERATIONS) --warmup $(WARMUP)

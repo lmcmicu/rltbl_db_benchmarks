@@ -127,7 +127,6 @@ async fn caching_performance(opts: &Opts) {
 
     // Check that the overall running time is no longer than the baselines defined below:
     let elapsed = now.elapsed().as_secs();
-    println!("Completed after {elapsed}s");
 
     let baselines = CachingTotalsBaselines {
         sqlite_none: 150,
@@ -190,8 +189,7 @@ async fn caching_performance(opts: &Opts) {
         },
     };
 
-    // Output a blank line to make the overall output more readable:
-    println!("");
+    println!("Completed after {elapsed}s\n");
 
     // Clean up:
     for table in &tables_to_choose_from {
