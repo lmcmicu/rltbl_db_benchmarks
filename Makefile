@@ -7,9 +7,9 @@ SHELL := bash
 # Comment out CARGO_FLAGS to run dev target
 CARGO_FLAGS = --release
 SEED = 0
-ITERATIONS = 2500
+ITERATIONS = 4000
 NOISE_THRESHOLD = 5
-WARMUP = 100
+WARMUP = 1
 VERSION = v0.1.0
 
 COMMON_ARGS = --seed $(SEED) --collector silent --iterations $(ITERATIONS) --warmup $(WARMUP)

@@ -129,16 +129,16 @@ async fn caching_performance(opts: &Opts) {
     let elapsed = now.elapsed().as_secs();
 
     let baselines = CachingTotalsBaselines {
-        sqlite_none: 150,
-        postgresql_none: 100,
-        sqlite_truncate_all: 60,
-        postgresql_truncate_all: 45,
-        sqlite_truncate: 50,
-        postgresql_truncate: 40,
-        sqlite_trigger: 10,
-        postgresql_trigger: 10,
-        sqlite_memory: 10,
-        postgresql_memory: 10,
+        sqlite_none: 200,
+        postgresql_none: 125,
+        sqlite_truncate_all: 75,
+        postgresql_truncate_all: 65,
+        sqlite_truncate: 65,
+        postgresql_truncate: 55,
+        sqlite_trigger: 20,
+        postgresql_trigger: 20,
+        sqlite_memory: 20,
+        postgresql_memory: 20,
     };
 
     match pool.get_caching_strategy() {
