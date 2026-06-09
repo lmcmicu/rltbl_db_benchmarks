@@ -10,10 +10,12 @@ SEED = 0
 ITERATIONS = 4000
 NOISE_THRESHOLD = 5
 WARMUP = 1
+REGRESSION_METRICS = iters-rate,latency-mean
 VERSION = v0.1.0
 
 COMMON_ARGS = --seed $(SEED) --collector silent --iterations $(ITERATIONS) --warmup $(WARMUP)
-CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD) --fail-on-regression
+CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD) --fail-on-regression \
+	--regression-metrics $(REGRESSION_METRICS)
 BASELINE_ARGS = --baseline-dir caching_baselines
 
 .PHONY: caching caching_baselines
