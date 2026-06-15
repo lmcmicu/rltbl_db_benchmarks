@@ -1,12 +1,12 @@
 {
-  "sqlite_none": 250,
-  "postgresql_none": 75,
-  "sqlite_truncate_all": 75,
-  "postgresql_truncate_all": 45,
-  "sqlite_truncate": 65,
-  "postgresql_truncate": 40,
-  "sqlite_trigger": 20,
-  "postgresql_trigger": 20,
-  "sqlite_memory": 20,
-  "postgresql_memory": 20
+  "sqlite_none": 65,
+  "postgresql_none": 35,
+  "sqlite_truncate_all": 70,
+  "postgresql_truncate_all": 75,
+  "sqlite_truncate": 60,
+  "postgresql_truncate": 65,
+  "sqlite_trigger": 70,
+  "postgresql_trigger": 55,
+  "sqlite_memory": 50,
+  "postgresql_memory": 55
 }
