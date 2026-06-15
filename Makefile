@@ -6,12 +6,14 @@ SHELL := bash
 
 SEED = 0
 WARMUP = 100
-NOISE_THRESHOLD = 10
+NOISE_THRESHOLD = 5
+RATE = 75
 REGRESSION_METRICS = iters-rate,latency-mean
 VERSION = v0.1.0
 
 COMMON_ARGS = \
 	--seed $(SEED) \
+	--rate $(RATE) \
 	--noise-threshold $(NOISE_THRESHOLD) \
 	--collector silent \
 	--warmup $(WARMUP) \
