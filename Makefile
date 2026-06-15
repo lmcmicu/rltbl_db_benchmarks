@@ -32,7 +32,7 @@ caching:
 		caching postgresql none
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file caching_baselines/sqlite-truncate_all-$(VERSION).json \
-		--iterations 5000 \
+		--iterations 2500 \
 		caching sqlite truncate_all
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file caching_baselines/postgresql-truncate_all-$(VERSION).json \
@@ -40,7 +40,7 @@ caching:
 		caching postgresql truncate_all
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file caching_baselines/sqlite-truncate-$(VERSION).json \
-		--iterations 5000 \
+		--iterations 2500 \
 		caching sqlite truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file caching_baselines/postgresql-truncate-$(VERSION).json \
@@ -48,7 +48,7 @@ caching:
 		caching postgresql truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file caching_baselines/sqlite-trigger-$(VERSION).json \
-		--iterations 15000 \
+		--iterations 10000 \
 		caching sqlite trigger
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file caching_baselines/postgresql-trigger-$(VERSION).json \
@@ -56,7 +56,7 @@ caching:
 		caching postgresql trigger
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file caching_baselines/sqlite-memory-$(VERSION).json \
-		--iterations 15000 \
+		--iterations 10000 \
 		caching sqlite "memory:1000"
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file caching_baselines/postgresql-memory-$(VERSION).json \
@@ -71,25 +71,25 @@ caching_baselines:
 		--iterations 1000 \
 		--save-baseline postgresql-none-$(VERSION) caching postgresql none
 	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) \
-		--iterations 5000 \
+		--iterations 2500 \
 		--save-baseline sqlite-truncate_all-$(VERSION) caching sqlite truncate_all
 	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) \
 		--iterations 5000 \
 		--save-baseline postgresql-truncate_all-$(VERSION) caching postgresql truncate_all
 	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) \
-		--iterations 5000 \
+		--iterations 2500 \
 		--save-baseline sqlite-truncate-$(VERSION) caching sqlite truncate
 	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) \
 		--iterations 5000 \
 		--save-baseline postgresql-truncate-$(VERSION) caching postgresql truncate
 	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) \
-		--iterations 15000 \
+		--iterations 10000 \
 		--save-baseline sqlite-trigger-$(VERSION) caching sqlite trigger
 	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) \
 		--iterations 15000 \
 		--save-baseline postgresql-trigger-$(VERSION) caching postgresql trigger
 	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) \
-		--iterations 15000 \
+		--iterations 10000 \
 		--save-baseline sqlite-memory-$(VERSION) caching sqlite "memory:1000"
 	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) \
 		--iterations 15000 \
