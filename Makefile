@@ -7,13 +7,11 @@ SHELL := bash
 SEED = 0
 WARMUP = 100
 NOISE_THRESHOLD = 5
-RATE = 75
 REGRESSION_METRICS = iters-rate,latency-mean
 VERSION = v0.1.0
 
 COMMON_ARGS = \
 	--seed $(SEED) \
-	--rate $(RATE) \
 	--collector silent \
 	--warmup $(WARMUP) \
 	--totals-file caching_baselines/totals-$(VERSION).json
