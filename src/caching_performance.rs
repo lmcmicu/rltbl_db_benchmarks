@@ -35,6 +35,58 @@ struct CachingTotalsBaselines {
     postgresql_memory: u64,
 }
 
+impl CachingTotalsBaselines {
+    fn compare_with(&self, kind: &DbKind, strategy: &CachingStrategy, elapsed: u64) {
+        match strategy {
+            CachingStrategy::None => match kind {
+                DbKind::SQLite if elapsed > self.sqlite_none => {
+                    panic!("Took longer than {}s.", self.sqlite_none);
+                }
+                DbKind::PostgreSQL if elapsed > self.postgresql_none => {
+                    panic!("Took longer than {}s.", self.postgresql_none);
+                }
+                _ => (),
+            },
+            CachingStrategy::TruncateAll => match kind {
+                DbKind::SQLite if elapsed > self.sqlite_truncate_all => {
+                    panic!("Took longer than {}s.", self.sqlite_truncate);
+                }
+                DbKind::PostgreSQL if elapsed > self.postgresql_truncate_all => {
+                    panic!("Took longer than {}s.", self.postgresql_truncate);
+                }
+                _ => (),
+            },
+            CachingStrategy::Truncate => match kind {
+                DbKind::SQLite if elapsed > self.sqlite_truncate => {
+                    panic!("Took longer than {}s.", self.sqlite_truncate);
+                }
+                DbKind::PostgreSQL if elapsed > self.postgresql_truncate => {
+                    panic!("Took longer than {}s.", self.postgresql_truncate);
+                }
+                _ => (),
+            },
+            CachingStrategy::Trigger => match kind {
+                DbKind::SQLite if elapsed > self.sqlite_trigger => {
+                    panic!("Took longer than {}s.", self.sqlite_trigger);
+                }
+                DbKind::PostgreSQL if elapsed > self.postgresql_trigger => {
+                    panic!("Took longer than {}s.", self.postgresql_trigger);
+                }
+                _ => (),
+            },
+            CachingStrategy::Memory(_) => match kind {
+                DbKind::SQLite if elapsed > self.sqlite_memory => {
+                    panic!("Took longer than {}s.", self.sqlite_memory);
+                }
+                DbKind::PostgreSQL if elapsed > self.postgresql_memory => {
+                    panic!("Took longer than {}s.", self.postgresql_memory);
+                }
+                _ => (),
+            },
+        }
+    }
+}
+
 #[async_trait]
 impl StatelessBenchSuite for CachingPerformance {
     async fn bench(&mut self, _: &IterInfo) -> Result<IterReport> {
@@ -158,55 +210,8 @@ impl CachingPerformance {
             postgresql_memory: 20,
         };
 
-        match pool.get_caching_strategy() {
-            CachingStrategy::None => match pool.kind() {
-                DbKind::SQLite if elapsed > baselines.sqlite_none => {
-                    panic!("Took longer than {}s.", baselines.sqlite_none);
-                }
-                DbKind::PostgreSQL if elapsed > baselines.postgresql_none => {
-                    panic!("Took longer than {}s.", baselines.postgresql_none);
-                }
-                _ => (),
-            },
-            CachingStrategy::TruncateAll => match pool.kind() {
-                DbKind::SQLite if elapsed > baselines.sqlite_truncate_all => {
-                    panic!("Took longer than {}s.", baselines.sqlite_truncate);
-                }
-                DbKind::PostgreSQL if elapsed > baselines.postgresql_truncate_all => {
-                    panic!("Took longer than {}s.", baselines.postgresql_truncate);
-                }
-                _ => (),
-            },
-            CachingStrategy::Truncate => match pool.kind() {
-                DbKind::SQLite if elapsed > baselines.sqlite_truncate => {
-                    panic!("Took longer than {}s.", baselines.sqlite_truncate);
-                }
-                DbKind::PostgreSQL if elapsed > baselines.postgresql_truncate => {
-                    panic!("Took longer than {}s.", baselines.postgresql_truncate);
-                }
-                _ => (),
-            },
-            CachingStrategy::Trigger => match pool.kind() {
-                DbKind::SQLite if elapsed > baselines.sqlite_trigger => {
-                    panic!("Took longer than {}s.", baselines.sqlite_trigger);
-                }
-                DbKind::PostgreSQL if elapsed > baselines.postgresql_trigger => {
-                    panic!("Took longer than {}s.", baselines.postgresql_trigger);
-                }
-                _ => (),
-            },
-            CachingStrategy::Memory(_) => match pool.kind() {
-                DbKind::SQLite if elapsed > baselines.sqlite_memory => {
-                    panic!("Took longer than {}s.", baselines.sqlite_memory);
-                }
-                DbKind::PostgreSQL if elapsed > baselines.postgresql_memory => {
-                    panic!("Took longer than {}s.", baselines.postgresql_memory);
-                }
-                _ => (),
-            },
-        };
-
         println!("Completed after {elapsed}s\n");
+        baselines.compare_with(&pool.kind(), &pool.get_caching_strategy(), elapsed);
 
         // Clean up:
         for table in &tables_to_choose_from {
