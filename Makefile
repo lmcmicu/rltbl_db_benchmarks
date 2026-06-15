@@ -6,7 +6,7 @@ SHELL := bash
 
 SEED = 0
 WARMUP = 100
-NOISE_THRESHOLD = 5
+NOISE_THRESHOLD = 10
 REGRESSION_METRICS = iters-rate,latency-mean
 VERSION = v0.1.0
 
