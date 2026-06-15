@@ -14,11 +14,11 @@ VERSION = v0.1.0
 COMMON_ARGS = \
 	--seed $(SEED) \
 	--rate $(RATE) \
-	--noise-threshold $(NOISE_THRESHOLD) \
 	--collector silent \
 	--warmup $(WARMUP) \
 	--totals-file caching_baselines/totals-$(VERSION).json
-CACHING_ARGS = --fail-on-regression --regression-metrics $(REGRESSION_METRICS)
+CACHING_ARGS = --fail-on-regression --regression-metrics $(REGRESSION_METRICS) \
+	--noise-threshold $(NOISE_THRESHOLD)
 BASELINE_ARGS = --baseline-dir caching_baselines
 
 .PHONY: caching caching_baselines
