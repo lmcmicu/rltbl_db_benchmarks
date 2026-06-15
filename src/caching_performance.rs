@@ -11,6 +11,7 @@ use rltbl_db::{
     core::{CachingStrategy, DbQuery},
     db_kind::DbKind,
 };
+use serde::{Deserialize, Serialize};
 use std::{str::FromStr, time::Instant};
 
 #[derive(Clone)]
@@ -22,6 +23,7 @@ pub(crate) struct CachingPerformance {
 }
 
 // Useful struct for validating the total times of the caching performance tests.
+#[derive(Serialize, Deserialize)]
 struct CachingTotalsBaselines {
     sqlite_none: u64,
     postgresql_none: u64,
@@ -125,8 +127,15 @@ impl CachingPerformance {
         bench: &BenchCli,
         strategy: &str,
         edit_rate: usize,
+        totals_file: &str,
         seed: i64,
     ) {
+        // Read in the totals baselines as a JSON:
+        let totals_baselines: CachingTotalsBaselines = {
+            let totals_baselines = slurp::read_all_to_string(totals_file).unwrap();
+            serde_json::from_str(&totals_baselines).unwrap()
+        };
+
         let mut pool = {
             let kind = DbKind::from_str(&kind).expect("Error reading database kind");
             let url = match kind {
@@ -196,22 +205,8 @@ impl CachingPerformance {
         // Check that the overall running time is no longer than the baselines defined below:
         let elapsed = now.elapsed().as_secs();
 
-        // TODO: Read these values from a (JSON?) file, and make it possible to re-save.
-        let baselines = CachingTotalsBaselines {
-            sqlite_none: 250,
-            postgresql_none: 150,
-            sqlite_truncate_all: 75,
-            postgresql_truncate_all: 65,
-            sqlite_truncate: 65,
-            postgresql_truncate: 55,
-            sqlite_trigger: 20,
-            postgresql_trigger: 20,
-            sqlite_memory: 20,
-            postgresql_memory: 20,
-        };
-
         println!("Completed after {elapsed}s\n");
-        baselines.compare_with(&pool.kind(), &pool.get_caching_strategy(), elapsed);
+        totals_baselines.compare_with(&pool.kind(), &pool.get_caching_strategy(), elapsed);
 
         // Clean up:
         for table in &tables_to_choose_from {

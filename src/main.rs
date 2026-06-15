@@ -9,6 +9,9 @@ struct Opts {
     #[clap(long, default_value = "-1")]
     seed: i64,
 
+    #[clap(long)]
+    totals_file: String,
+
     #[clap(subcommand)]
     command: Subcommands,
 
@@ -39,8 +42,15 @@ async fn main() {
             strategy,
             edit_rate,
         } => {
-            CachingPerformance::perform_caching(&kind, &opts.bench, strategy, *edit_rate, opts.seed)
-                .await
+            CachingPerformance::perform_caching(
+                &kind,
+                &opts.bench,
+                strategy,
+                *edit_rate,
+                &opts.totals_file,
+                opts.seed,
+            )
+            .await
         }
     }
 }

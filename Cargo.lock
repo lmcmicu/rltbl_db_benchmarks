@@ -1881,6 +1881,9 @@ dependencies = [
  "rand 0.10.1",
  "rlt",
  "rltbl_db",
+ "serde",
+ "serde_json",
+ "slurp",
  "tokio",
 ]
 
@@ -2115,6 +2118,12 @@ name = "slab"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
+
+[[package]]
+name = "slurp"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "673e801a0f3b2f8c5c5c4371ba6e09e5ace34bca8df26db5945d01f072caf704"
 
 [[package]]
 name = "smallvec"
