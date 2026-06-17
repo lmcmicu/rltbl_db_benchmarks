@@ -53,12 +53,6 @@ impl BenchSuite for CachingPerformance {
     // Setup procedure before each worker starts.
     async fn setup(&mut self, state: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
         clear_meta_cache().unwrap();
-        self.tables = vec![
-            "alpha".to_string(),
-            "beta".to_string(),
-            "gamma".to_string(),
-            "delta".to_string(),
-        ];
         for table in &self.tables {
             state.drop_table(table).await.unwrap();
             state.drop_view(&format!("{table}_view")).await.unwrap();
@@ -177,7 +171,10 @@ impl CachingPerformance {
                 seed: seed,
                 kind: DbKind::from_str(&kind).expect("Error reading database kind"),
                 strategy: CachingStrategy::from_str(&strategy).unwrap(),
-                tables: vec![],
+                tables: ["alpha", "beta", "gamma", "delta"]
+                    .iter()
+                    .map(|t| t.to_string())
+                    .collect(),
                 edit_rate: edit_rate,
             },
         )
