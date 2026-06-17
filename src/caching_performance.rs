@@ -12,17 +12,19 @@ use rltbl_db::{
     db_kind::DbKind,
     memory::clear_meta_cache,
 };
-use serde::{Deserialize, Serialize};
+//use serde::{Deserialize, Serialize};
 use std::{str::FromStr, time::Instant};
 
 #[derive(Clone)]
 pub(crate) struct CachingPerformance {
     seed: i64,
-    pool: AnyPool,
+    kind: DbKind,
+    strategy: CachingStrategy,
     tables: Vec<String>,
     edit_rate: usize,
 }
 
+/*
 // TODO: It turns out that we might not need to do this. Remove this struct and also the totals file
 // from caching_baselines/
 // Useful struct for validating the total times of the caching performance tests.
@@ -91,35 +93,106 @@ impl CachingTotalsBaselines {
         }
     }
 }
-
-// TODO: Replace this with something more useful?
-pub struct DummyState;
+*/
 
 #[async_trait]
 impl BenchSuite for CachingPerformance {
-    type WorkerState = DummyState;
+    type WorkerState = AnyPool;
 
+    // Initialize the state for a worker.
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
-        Ok(DummyState {})
+        let pool = {
+            let url = match self.kind {
+                DbKind::SQLite => ":memory:",
+                DbKind::PostgreSQL => "postgresql:///rltbl_db",
+            };
+            AnyPool::connect(url).await.unwrap()
+        };
+        Ok(pool)
     }
 
-    async fn setup(&mut self, _state: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
-        // TODO: This is identical to the default implementation for this function, which
-        // by default is a noop. I guess we should do something more interesting here if we
-        // need to set up a database connection.
+    // Setup procedure before each worker starts.
+    async fn setup(&mut self, state: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
+        self.tables = vec![
+            "alpha".to_string(),
+            "beta".to_string(),
+            "gamma".to_string(),
+            "delta".to_string(),
+        ];
+        for table in &self.tables {
+            state.drop_table(table).await.unwrap();
+            state.drop_view(&format!("{table}_view")).await.unwrap();
+            state
+                .execute(&format!("CREATE TABLE {table} ( foo INT, bar INT )"), ())
+                .await
+                .unwrap();
+            state
+                .execute(
+                    &format!("CREATE VIEW {table}_view AS SELECT * FROM {table}"),
+                    (),
+                )
+                .await
+                .unwrap();
+
+            // Add a few tens of thousands of values to the table:
+            let mut values = vec![];
+            for i in 0..5 {
+                for j in 0..30000 {
+                    values.push(format!("({i}, {j})"));
+                }
+            }
+            let values = values.join(", ");
+            state
+                .execute(
+                    &format!("INSERT INTO {table} (foo, bar) VALUES {}", values),
+                    (),
+                )
+                .await
+                .unwrap();
+        }
+        state.set_cache_aware_query(true);
+        state.set_caching_strategy(&self.strategy);
+        clear_meta_cache().unwrap();
+
         Ok(())
     }
 
+    // Teardown procedure after each worker finishes.
     async fn teardown(self, _state: Self::WorkerState, _info: IterInfo) -> Result<()> {
         // TODO: This is identical to the default implementation for this function, which
         // by default is a noop. I guess we should do something more interesting here if we
         // need to tear down a database connection.
+
+        // Clean up:
+        //for table in &tables_to_choose_from {
+        //    pool.drop_table(table).await.unwrap();
+        //}
         Ok(())
     }
 
-    async fn bench(&mut self, _state: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
+    async fn bench(&mut self, state: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         let start = Instant::now();
-        self.perform_caching_detail().await;
+        //self.perform_caching_detail(state).await;
+
+        let select_table = self.random_table();
+        state
+            .cache(
+                &format!("SELECT foo, SUM(bar) FROM {select_table}_view GROUP BY foo ORDER BY foo"),
+                (),
+            )
+            .await
+            .unwrap();
+        if self.edit_rate != 0 && self.random_between(0, self.edit_rate) == 0 {
+            let table_to_edit = self.random_table();
+            state
+                .execute(
+                    &format!("INSERT INTO {table_to_edit} (foo) VALUES (1), (1)"),
+                    (),
+                )
+                .await
+                .unwrap();
+        }
+
         let duration = start.elapsed();
         Ok(IterReport {
             duration,
@@ -153,60 +226,18 @@ impl CachingPerformance {
         bench: &BenchCli,
         strategy: &str,
         edit_rate: usize,
-        totals_file: &str,
+        _totals_file: &str,
         seed: i64,
     ) {
         // Read in the totals baselines as a JSON:
-        let totals_baselines: CachingTotalsBaselines = {
-            let totals_baselines = slurp::read_all_to_string(totals_file).unwrap();
-            serde_json::from_str(&totals_baselines).unwrap()
-        };
-
-        let mut pool = {
-            let kind = DbKind::from_str(&kind).expect("Error reading database kind");
-            let url = match kind {
-                DbKind::SQLite => ":memory:",
-                DbKind::PostgreSQL => "postgresql:///rltbl_db",
-            };
-            AnyPool::connect(url).await.unwrap()
-        };
-        let tables_to_choose_from = ["alpha", "beta", "gamma", "delta"];
-        for table in &tables_to_choose_from {
-            pool.drop_table(table).await.unwrap();
-            pool.drop_view(&format!("{table}_view")).await.unwrap();
-            pool.execute(&format!("CREATE TABLE {table} ( foo INT, bar INT )"), ())
-                .await
-                .unwrap();
-            pool.execute(
-                &format!("CREATE VIEW {table}_view AS SELECT * FROM {table}"),
-                (),
-            )
-            .await
-            .unwrap();
-
-            // Add a few tens of thousands of values to the table:
-            let mut values = vec![];
-            for i in 0..5 {
-                for j in 0..30000 {
-                    values.push(format!("({i}, {j})"));
-                }
-            }
-            let values = values.join(", ");
-            pool.execute(
-                &format!("INSERT INTO {table} (foo, bar) VALUES {}", values),
-                (),
-            )
-            .await
-            .unwrap();
-        }
-        pool.set_cache_aware_query(true);
-        pool.set_caching_strategy(&CachingStrategy::from_str(&strategy).unwrap());
-        clear_meta_cache().unwrap();
+        //let totals_baselines: CachingTotalsBaselines = {
+        //    let totals_baselines = slurp::read_all_to_string(totals_file).unwrap();
+        //    serde_json::from_str(&totals_baselines).unwrap()
+        //};
 
         println!(
-            "Caching Performance Test - Starting test with db kind '{}' and strategy '{}'.",
-            pool.kind(),
-            pool.get_caching_strategy()
+            "Caching Performance Test - Starting test with \
+             db kind '{kind}' and strategy '{strategy}'.",
         );
 
         // Mark the start time of the test:
@@ -217,12 +248,9 @@ impl CachingPerformance {
             bench.clone(),
             CachingPerformance {
                 seed: seed,
-                pool: pool.clone(),
-                tables: tables_to_choose_from
-                    .clone()
-                    .into_iter()
-                    .map(|s| s.to_string())
-                    .collect::<Vec<_>>(),
+                kind: DbKind::from_str(&kind).expect("Error reading database kind"),
+                strategy: CachingStrategy::from_str(&strategy).unwrap(),
+                tables: vec![],
                 edit_rate: edit_rate,
             },
         )
@@ -233,32 +261,6 @@ impl CachingPerformance {
         let elapsed = now.elapsed().as_secs();
 
         println!("Completed after {elapsed}s\n");
-        totals_baselines.compare_with(&pool.kind(), &pool.get_caching_strategy(), elapsed);
-
-        // Clean up:
-        for table in &tables_to_choose_from {
-            pool.drop_table(table).await.unwrap();
-        }
-    }
-
-    async fn perform_caching_detail(&mut self) {
-        let select_table = self.random_table();
-        self.pool
-            .cache(
-                &format!("SELECT foo, SUM(bar) FROM {select_table}_view GROUP BY foo ORDER BY foo"),
-                (),
-            )
-            .await
-            .unwrap();
-        if self.edit_rate != 0 && self.random_between(0, self.edit_rate) == 0 {
-            let table_to_edit = self.random_table();
-            self.pool
-                .execute(
-                    &format!("INSERT INTO {table_to_edit} (foo) VALUES (1), (1)"),
-                    (),
-                )
-                .await
-                .unwrap();
-        }
+        //totals_baselines.compare_with(&pool.kind(), &pool.get_caching_strategy(), elapsed);
     }
 }
