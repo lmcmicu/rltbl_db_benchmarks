@@ -102,9 +102,9 @@ impl BenchSuite for CachingPerformance {
     // use the worker_id.
     // Teardown procedure after each worker finishes.
     async fn teardown(self, state: Self::WorkerState, _info: IterInfo) -> Result<()> {
-        //for table in &self.tables {
-        //    state.drop_table(table).await.unwrap();
-        //}
+        for table in &self.tables {
+            state.drop_table(table).await.unwrap();
+        }
         Ok(())
     }
 
