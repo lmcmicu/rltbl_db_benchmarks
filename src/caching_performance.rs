@@ -24,77 +24,6 @@ pub(crate) struct CachingPerformance {
     edit_rate: usize,
 }
 
-/*
-// TODO: It turns out that we might not need to do this. Remove this struct and also the totals file
-// from caching_baselines/
-// Useful struct for validating the total times of the caching performance tests.
-#[derive(Serialize, Deserialize)]
-struct CachingTotalsBaselines {
-    sqlite_none: u64,
-    postgresql_none: u64,
-    sqlite_truncate_all: u64,
-    postgresql_truncate_all: u64,
-    sqlite_truncate: u64,
-    postgresql_truncate: u64,
-    sqlite_trigger: u64,
-    postgresql_trigger: u64,
-    sqlite_memory: u64,
-    postgresql_memory: u64,
-}
-
-impl CachingTotalsBaselines {
-    fn compare_with(&self, kind: &DbKind, strategy: &CachingStrategy, elapsed: u64) {
-        match strategy {
-            CachingStrategy::None => match kind {
-                DbKind::SQLite if elapsed > self.sqlite_none => {
-                    panic!("Took longer than {}s.", self.sqlite_none);
-                }
-                DbKind::PostgreSQL if elapsed > self.postgresql_none => {
-                    panic!("Took longer than {}s.", self.postgresql_none);
-                }
-                _ => (),
-            },
-            CachingStrategy::TruncateAll => match kind {
-                DbKind::SQLite if elapsed > self.sqlite_truncate_all => {
-                    panic!("Took longer than {}s.", self.sqlite_truncate);
-                }
-                DbKind::PostgreSQL if elapsed > self.postgresql_truncate_all => {
-                    panic!("Took longer than {}s.", self.postgresql_truncate);
-                }
-                _ => (),
-            },
-            CachingStrategy::Truncate => match kind {
-                DbKind::SQLite if elapsed > self.sqlite_truncate => {
-                    panic!("Took longer than {}s.", self.sqlite_truncate);
-                }
-                DbKind::PostgreSQL if elapsed > self.postgresql_truncate => {
-                    panic!("Took longer than {}s.", self.postgresql_truncate);
-                }
-                _ => (),
-            },
-            CachingStrategy::Trigger => match kind {
-                DbKind::SQLite if elapsed > self.sqlite_trigger => {
-                    panic!("Took longer than {}s.", self.sqlite_trigger);
-                }
-                DbKind::PostgreSQL if elapsed > self.postgresql_trigger => {
-                    panic!("Took longer than {}s.", self.postgresql_trigger);
-                }
-                _ => (),
-            },
-            CachingStrategy::Memory(_) => match kind {
-                DbKind::SQLite if elapsed > self.sqlite_memory => {
-                    panic!("Took longer than {}s.", self.sqlite_memory);
-                }
-                DbKind::PostgreSQL if elapsed > self.postgresql_memory => {
-                    panic!("Took longer than {}s.", self.postgresql_memory);
-                }
-                _ => (),
-            },
-        }
-    }
-}
-*/
-
 #[async_trait]
 impl BenchSuite for CachingPerformance {
     type WorkerState = AnyPool;
@@ -158,21 +87,15 @@ impl BenchSuite for CachingPerformance {
     }
 
     // Teardown procedure after each worker finishes.
-    async fn teardown(self, _state: Self::WorkerState, _info: IterInfo) -> Result<()> {
-        // TODO: This is identical to the default implementation for this function, which
-        // by default is a noop. I guess we should do something more interesting here if we
-        // need to tear down a database connection.
-
-        // Clean up:
-        //for table in &tables_to_choose_from {
-        //    pool.drop_table(table).await.unwrap();
-        //}
+    async fn teardown(self, state: Self::WorkerState, _info: IterInfo) -> Result<()> {
+        for table in &self.tables {
+            state.drop_table(table).await.unwrap();
+        }
         Ok(())
     }
 
     async fn bench(&mut self, state: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         let start = Instant::now();
-        //self.perform_caching_detail(state).await;
 
         let select_table = self.random_table();
         state
@@ -229,21 +152,11 @@ impl CachingPerformance {
         _totals_file: &str,
         seed: i64,
     ) {
-        // Read in the totals baselines as a JSON:
-        //let totals_baselines: CachingTotalsBaselines = {
-        //    let totals_baselines = slurp::read_all_to_string(totals_file).unwrap();
-        //    serde_json::from_str(&totals_baselines).unwrap()
-        //};
-
         println!(
             "Caching Performance Test - Starting test with \
              db kind '{kind}' and strategy '{strategy}'.",
         );
 
-        // Mark the start time of the test:
-        let now = Instant::now();
-
-        // Run the test:
         rlt::cli::run(
             bench.clone(),
             CachingPerformance {
@@ -256,11 +169,5 @@ impl CachingPerformance {
         )
         .await
         .unwrap();
-
-        // Check that the overall running time is no longer than the baselines defined below:
-        let elapsed = now.elapsed().as_secs();
-
-        println!("Completed after {elapsed}s\n");
-        //totals_baselines.compare_with(&pool.kind(), &pool.get_caching_strategy(), elapsed);
     }
 }
