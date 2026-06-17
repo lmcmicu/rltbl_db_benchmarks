@@ -28,7 +28,11 @@ pub(crate) struct CachingPerformance {
 impl BenchSuite for CachingPerformance {
     type WorkerState = AnyPool;
 
-    // Initialize the state for a worker.
+    // The comment below is from the source code for the trait in rlt, but I think what it
+    // actually does is initialize the state for all of the workers.
+    // That said, maybe what needs to be done to get a per-worker state is to somehow
+    // use the worker_id.
+    // Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
         let pool = {
             let url = match self.kind {
@@ -40,6 +44,12 @@ impl BenchSuite for CachingPerformance {
         Ok(pool)
     }
 
+    // The comment below is from the source code for the trait in rlt, but I think what it
+    // actually does is to run the setup procedure for all of the workers (as judged by the
+    // number of rows observed in each of the four tables once the test is running), i.e.,
+    // before any of them run.
+    // That said, maybe what needs to be done to get a per-worker setup is to somehow
+    // use the worker_id.
     // Setup procedure before each worker starts.
     async fn setup(&mut self, state: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
         clear_meta_cache().unwrap();
@@ -85,6 +95,11 @@ impl BenchSuite for CachingPerformance {
         Ok(())
     }
 
+    // The comment below is from the source code for the trait in rlt, but I think what it
+    // actually does is to run the teardown procedure for all of the workers, i.e., after they
+    // are all done.
+    // That said, maybe what needs to be done to get a per-worker teardown is to somehow
+    // use the worker_id.
     // Teardown procedure after each worker finishes.
     async fn teardown(self, state: Self::WorkerState, _info: IterInfo) -> Result<()> {
         //for table in &self.tables {
