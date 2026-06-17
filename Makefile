@@ -13,7 +13,7 @@ VERSION = v0.1.0
 COMMON_ARGS = \
 	--seed $(SEED) \
 	--collector silent \
-	--duration 20s \
+	--duration 1m \
 	--warmup $(WARMUP) \
 	--totals-file caching_baselines/totals-$(VERSION).json
 CACHING_ARGS = --fail-on-regression --regression-metrics $(REGRESSION_METRICS) \
