@@ -5,7 +5,7 @@ use rand::{
     distr::{Distribution as _, Uniform},
     rngs::StdRng,
 };
-use rlt::{IterInfo, IterReport, StatelessBenchSuite, Status, cli::BenchCli};
+use rlt::{BenchSuite, IterInfo, IterReport, Status, cli::BenchCli};
 use rltbl_db::{
     any::AnyPool,
     core::{CachingStrategy, DbQuery},
@@ -22,6 +22,8 @@ pub(crate) struct CachingPerformance {
     edit_rate: usize,
 }
 
+// TODO: It turns out that we might not need to do this. Remove this struct and also the totals file
+// from caching_baselines/
 // Useful struct for validating the total times of the caching performance tests.
 #[derive(Serialize, Deserialize)]
 struct CachingTotalsBaselines {
@@ -89,9 +91,32 @@ impl CachingTotalsBaselines {
     }
 }
 
+// TODO: Replace this with something more useful?
+pub struct DummyState;
+
 #[async_trait]
-impl StatelessBenchSuite for CachingPerformance {
-    async fn bench(&mut self, _: &IterInfo) -> Result<IterReport> {
+impl BenchSuite for CachingPerformance {
+    type WorkerState = DummyState;
+
+    async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
+        Ok(DummyState {})
+    }
+
+    async fn setup(&mut self, _state: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
+        // TODO: This is identical to the default implementation for this function, which
+        // by default is a noop. I guess we should do something more interesting here if we
+        // need to set up a database connection.
+        Ok(())
+    }
+
+    async fn teardown(self, _state: Self::WorkerState, _info: IterInfo) -> Result<()> {
+        // TODO: This is identical to the default implementation for this function, which
+        // by default is a noop. I guess we should do something more interesting here if we
+        // need to tear down a database connection.
+        Ok(())
+    }
+
+    async fn bench(&mut self, _state: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         let start = Instant::now();
         self.perform_caching_detail().await;
         let duration = start.elapsed();

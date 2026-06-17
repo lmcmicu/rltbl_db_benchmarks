@@ -5,7 +5,7 @@ SHELL := bash
 .SUFFIXES:
 
 SEED = 0
-WARMUP = 1
+WARMUP = 10
 NOISE_THRESHOLD = 5
 REGRESSION_METRICS = iters-rate,latency-mean
 VERSION = v0.1.0
@@ -22,7 +22,7 @@ BASELINE_ARGS = --baseline-dir caching_baselines
 
 .PHONY: caching caching_baselines
 
-caching:
+test_caching:
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file caching_baselines/sqlite-none-$(VERSION).json \
 		caching sqlite none
