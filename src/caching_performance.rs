@@ -10,6 +10,7 @@ use rltbl_db::{
     any::AnyPool,
     core::{CachingStrategy, DbQuery},
     db_kind::DbKind,
+    memory::clear_meta_cache,
 };
 use serde::{Deserialize, Serialize};
 use std::{str::FromStr, time::Instant};
@@ -200,6 +201,7 @@ impl CachingPerformance {
         }
         pool.set_cache_aware_query(true);
         pool.set_caching_strategy(&CachingStrategy::from_str(&strategy).unwrap());
+        clear_meta_cache().unwrap();
 
         println!(
             "Caching Performance Test - Starting test with db kind '{}' and strategy '{}'.",
