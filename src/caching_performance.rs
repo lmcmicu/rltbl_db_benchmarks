@@ -42,6 +42,7 @@ impl BenchSuite for CachingPerformance {
 
     // Setup procedure before each worker starts.
     async fn setup(&mut self, state: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
+        clear_meta_cache().unwrap();
         self.tables = vec![
             "alpha".to_string(),
             "beta".to_string(),
@@ -81,16 +82,14 @@ impl BenchSuite for CachingPerformance {
         }
         state.set_cache_aware_query(true);
         state.set_caching_strategy(&self.strategy);
-        clear_meta_cache().unwrap();
-
         Ok(())
     }
 
     // Teardown procedure after each worker finishes.
     async fn teardown(self, state: Self::WorkerState, _info: IterInfo) -> Result<()> {
-        for table in &self.tables {
-            state.drop_table(table).await.unwrap();
-        }
+        //for table in &self.tables {
+        //    state.drop_table(table).await.unwrap();
+        //}
         Ok(())
     }
 
