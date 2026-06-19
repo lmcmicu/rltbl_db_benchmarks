@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "driver-rusqlite-raw-v0.1.0",
+    "created_at": "2026-06-19T21:25:05.656373024Z",
+    "rlt_version": "0.5.0",
+    "bench_config": {
+      "concurrency": 1,
+      "duration_secs": 60.0,
+      "warmup": 10,
+      "actual_duration_secs": 0.0
+    }
+  },
+  "summary": {
+    "success_ratio": 0.0,
+    "total_time": 0.0,
+    "concurrency": 1,
+    "iters": {
+      "total": 0,
+      "rate": 0.0
+    },
+    "items": {
+      "total": 0,
+      "rate": 0.0
+    },
+    "bytes": {
+      "total": 0,
+      "rate": 0.0
+    }
+  },
+  "status": {},
+  "errors": {}
+}

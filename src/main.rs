@@ -10,6 +10,9 @@ use rltbl_driver::RltblDriver;
 mod rusqlite_driver;
 use rusqlite_driver::RusqliteDriver;
 
+mod tokio_driver;
+use tokio_driver::TokioDriver;
+
 #[derive(Parser, Clone)]
 struct Opts {
     #[clap(long, default_value = "-1")]
@@ -66,7 +69,7 @@ async fn main() {
             .await
         }
         Subcommands::Rltbl { driver } => RltblDriver::test_rltbl(driver, &opts.bench).await,
-        Subcommands::Tokio { } => todo!(),
+        Subcommands::Tokio { } => TokioDriver::test_tokio(&opts.bench).await,
         Subcommands::Rusqlite { } => RusqliteDriver::test_rusqlite(&opts.bench).await,
         Subcommands::Libsql { } => todo!(),
     }

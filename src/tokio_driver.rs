@@ -1,22 +1,20 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use deadpool_sqlite::{Config, Pool, Runtime};
+use deadpool_postgres::{Config, Pool, Runtime, tokio_postgres::NoTls};
 use rlt::{BenchSuite, IterInfo, IterReport, Status, cli::BenchCli};
 use std::time::Instant;
 
 #[derive(Clone)]
-pub(crate) struct RusqliteDriver;
+pub(crate) struct TokioDriver;
 
-impl RusqliteDriver {
-    pub async fn test_rusqlite(bench: &BenchCli) {
-        rlt::cli::run(bench.clone(), RusqliteDriver {})
-            .await
-            .unwrap();
+impl TokioDriver {
+    pub async fn test_tokio(bench: &BenchCli) {
+        rlt::cli::run(bench.clone(), TokioDriver {}).await.unwrap();
     }
 }
 
 #[async_trait]
-impl BenchSuite for RusqliteDriver {
+impl BenchSuite for TokioDriver {
     type WorkerState = Pool;
 
     // The comment below is from the source code for the trait in rlt, but I think what it
@@ -25,8 +23,10 @@ impl BenchSuite for RusqliteDriver {
     // use the worker_id.
     // Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
-        let cfg = Config::new("test.db");
-        let pool = cfg.create_pool(Runtime::Tokio1).unwrap();
+        let mut cfg = Config::new();
+        let db_name = "rltbl_db";
+        cfg.dbname = Some(db_name.to_string());
+        let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
         Ok(pool)
     }
 
@@ -38,15 +38,12 @@ impl BenchSuite for RusqliteDriver {
     // use the worker_id.
     // Setup procedure before each worker starts.
     async fn setup(&mut self, state: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
-        let conn = state.get().await.unwrap();
-        conn.interact(move |conn| {
-            let mut stmt = conn
-                .prepare("CREATE TABLE rltbl_driver (foo INT, bar INT)")
-                .unwrap();
-            let _ = stmt.query([]).unwrap();
-        })
-        .await
-        .unwrap();
+        let client = state.get().await.unwrap();
+        let stmt = client
+            .prepare_cached("CREATE TABLE rltbl_driver (foo INT, bar INT)")
+            .await
+            .unwrap();
+        let _ = client.query(&stmt, &[]).await.unwrap();
 
         Ok(())
     }
@@ -58,13 +55,12 @@ impl BenchSuite for RusqliteDriver {
     // use the worker_id.
     // Teardown procedure after each worker finishes.
     async fn teardown(self, state: Self::WorkerState, _info: IterInfo) -> Result<()> {
-        let conn = state.get().await.unwrap();
-        conn.interact(move |conn| {
-            let mut stmt = conn.prepare("DROP TABLE rltbl_driver").unwrap();
-            let _ = stmt.query([]).unwrap();
-        })
-        .await
-        .unwrap();
+        let client = state.get().await.unwrap();
+        let stmt = client
+            .prepare_cached("DROP TABLE rltbl_driver")
+            .await
+            .unwrap();
+        let _ = client.query(&stmt, &[]).await.unwrap();
         Ok(())
     }
 
@@ -79,13 +75,9 @@ impl BenchSuite for RusqliteDriver {
         let sql = format!("INSERT INTO rltbl_driver (foo, bar) VALUES {values}");
 
         let start = Instant::now();
-        let conn = state.get().await.unwrap();
-        conn.interact(move |conn| {
-            let mut stmt = conn.prepare(&sql).unwrap();
-            let _ = stmt.query([]).unwrap();
-        })
-        .await
-        .unwrap();
+        let client = state.get().await.unwrap();
+        let stmt = client.prepare_cached(&sql).await.unwrap();
+        let _ = client.query(&stmt, &[]).await.unwrap();
 
         let duration = start.elapsed();
 
