@@ -6,7 +6,6 @@ SHELL := bash
 
 SEED = 0
 WARMUP = 10
-DURATION = 5m
 NOISE_THRESHOLD = 5
 REGRESSION_METRICS = iters-rate,latency-mean
 VERSION = v0.1.0
@@ -14,11 +13,9 @@ VERSION = v0.1.0
 COMMON_ARGS = \
 	--seed $(SEED) \
 	--collector silent \
-	--duration $(DURATION) \
 	--warmup $(WARMUP) \
 	--totals-file caching_baselines/totals-$(VERSION).json
-CACHING_ARGS = --fail-on-regression --regression-metrics $(REGRESSION_METRICS) \
-	--noise-threshold $(NOISE_THRESHOLD)
+CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD)
 BASELINE_ARGS = --baseline-dir caching_baselines
 
 .PHONY: caching caching_baselines

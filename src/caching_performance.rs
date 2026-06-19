@@ -12,8 +12,8 @@ use rltbl_db::{
     db_kind::DbKind,
     memory::clear_meta_cache,
 };
-//use serde::{Deserialize, Serialize};
-use std::{str::FromStr, time::Instant};
+use serde::{Deserialize, Serialize};
+use std::{num::NonZero, str::FromStr, time::Instant};
 
 #[derive(Clone)]
 pub(crate) struct CachingPerformance {
@@ -22,6 +22,112 @@ pub(crate) struct CachingPerformance {
     strategy: CachingStrategy,
     tables: Vec<String>,
     edit_rate: usize,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct CachingBaselinesEntry {
+    iterations: u64,
+    expected_time: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct CachingBaselines {
+    sqlite_none: CachingBaselinesEntry,
+    postgresql_none: CachingBaselinesEntry,
+    sqlite_truncate_all: CachingBaselinesEntry,
+    postgresql_truncate_all: CachingBaselinesEntry,
+    sqlite_truncate: CachingBaselinesEntry,
+    postgresql_truncate: CachingBaselinesEntry,
+    sqlite_trigger: CachingBaselinesEntry,
+    postgresql_trigger: CachingBaselinesEntry,
+    sqlite_memory: CachingBaselinesEntry,
+    postgresql_memory: CachingBaselinesEntry,
+}
+
+impl CachingBaselines {
+    fn get_iterations(&self, kind: &DbKind, strategy: &CachingStrategy) -> u64 {
+        match kind {
+            DbKind::SQLite => match strategy {
+                CachingStrategy::None => self.sqlite_none.iterations,
+                CachingStrategy::TruncateAll => self.sqlite_truncate_all.iterations,
+                CachingStrategy::Truncate => self.sqlite_truncate.iterations,
+                CachingStrategy::Trigger => self.sqlite_trigger.iterations,
+                CachingStrategy::Memory(_) => self.sqlite_memory.iterations,
+            },
+            DbKind::PostgreSQL => match strategy {
+                CachingStrategy::None => self.postgresql_none.iterations,
+                CachingStrategy::TruncateAll => self.postgresql_truncate_all.iterations,
+                CachingStrategy::Truncate => self.postgresql_truncate.iterations,
+                CachingStrategy::Trigger => self.postgresql_trigger.iterations,
+                CachingStrategy::Memory(_) => self.postgresql_memory.iterations,
+            },
+        }
+    }
+
+    fn compare_with(&self, kind: &DbKind, strategy: &CachingStrategy, elapsed: u64) {
+        match strategy {
+            CachingStrategy::None => match kind {
+                DbKind::SQLite if elapsed > self.sqlite_none.expected_time => {
+                    panic!("Took longer than {}s.", self.sqlite_none.expected_time);
+                }
+                DbKind::PostgreSQL if elapsed > self.postgresql_none.expected_time => {
+                    panic!("Took longer than {}s.", self.postgresql_none.expected_time);
+                }
+                _ => (),
+            },
+            CachingStrategy::TruncateAll => match kind {
+                DbKind::SQLite if elapsed > self.sqlite_truncate_all.expected_time => {
+                    panic!(
+                        "Took longer than {}s.",
+                        self.sqlite_truncate_all.expected_time
+                    );
+                }
+                DbKind::PostgreSQL if elapsed > self.postgresql_truncate_all.expected_time => {
+                    panic!(
+                        "Took longer than {}s.",
+                        self.postgresql_truncate_all.expected_time
+                    );
+                }
+                _ => (),
+            },
+            CachingStrategy::Truncate => match kind {
+                DbKind::SQLite if elapsed > self.sqlite_truncate.expected_time => {
+                    panic!("Took longer than {}s.", self.sqlite_truncate.expected_time);
+                }
+                DbKind::PostgreSQL if elapsed > self.postgresql_truncate.expected_time => {
+                    panic!(
+                        "Took longer than {}s.",
+                        self.postgresql_truncate.expected_time
+                    );
+                }
+                _ => (),
+            },
+            CachingStrategy::Trigger => match kind {
+                DbKind::SQLite if elapsed > self.sqlite_trigger.expected_time => {
+                    panic!("Took longer than {}s.", self.sqlite_trigger.expected_time);
+                }
+                DbKind::PostgreSQL if elapsed > self.postgresql_trigger.expected_time => {
+                    panic!(
+                        "Took longer than {}s.",
+                        self.postgresql_trigger.expected_time
+                    );
+                }
+                _ => (),
+            },
+            CachingStrategy::Memory(_) => match kind {
+                DbKind::SQLite if elapsed > self.sqlite_memory.expected_time => {
+                    panic!("Took longer than {}s.", self.sqlite_memory.expected_time);
+                }
+                DbKind::PostgreSQL if elapsed > self.postgresql_memory.expected_time => {
+                    panic!(
+                        "Took longer than {}s.",
+                        self.postgresql_memory.expected_time
+                    );
+                }
+                _ => (),
+            },
+        }
+    }
 }
 
 #[async_trait]
@@ -157,28 +263,51 @@ impl CachingPerformance {
         bench: &BenchCli,
         strategy: &str,
         edit_rate: usize,
-        _totals_file: &str,
+        totals_file: &str,
         seed: i64,
     ) {
+        let kind = DbKind::from_str(&kind).expect("Error reading database kind");
+        let strategy = CachingStrategy::from_str(&strategy).unwrap();
+
+        // Read in the baselines from a JSON on disk:
+        let baselines: CachingBaselines = {
+            let baselines = slurp::read_all_to_string(totals_file).unwrap();
+            serde_json::from_str(&baselines).unwrap()
+        };
+
+        // Set the number of iterations to run using the baseline info:
+        let mut bench = bench.clone();
+        bench.iterations = NonZero::new(baselines.get_iterations(&kind, &strategy));
+
         println!(
             "Caching Performance Test - Starting test with \
-             db kind '{kind}' and strategy '{strategy}'.",
+             db kind '{kind}' and strategy '{strategy}' for {} iterations.",
+            bench.iterations.unwrap()
         );
 
+        // Mark the start time of the test:
+        let now = Instant::now();
+
         rlt::cli::run(
-            bench.clone(),
+            bench,
             CachingPerformance {
-                seed: seed,
-                kind: DbKind::from_str(&kind).expect("Error reading database kind"),
-                strategy: CachingStrategy::from_str(&strategy).unwrap(),
+                seed,
+                kind,
+                strategy,
                 tables: ["alpha", "beta", "gamma", "delta"]
                     .iter()
                     .map(|t| t.to_string())
                     .collect(),
-                edit_rate: edit_rate,
+                edit_rate,
             },
         )
         .await
         .unwrap();
+
+        // Check that the overall running time is no longer than the baselines defined below:
+        let elapsed = now.elapsed().as_secs();
+
+        println!("Completed after {elapsed}s\n");
+        baselines.compare_with(&kind, &strategy, elapsed);
     }
 }

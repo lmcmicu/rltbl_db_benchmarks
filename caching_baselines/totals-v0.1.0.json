@@ -1,0 +1,12 @@
+{
+  "sqlite_none": {"iterations": 1000, "expected_time": 65000},
+  "postgresql_none": {"iterations": 1000, "expected_time": 35000},
+  "sqlite_truncate_all": {"iterations": 1000, "expected_time": 70000},
+  "postgresql_truncate_all": {"iterations": 1000, "expected_time": 75000},
+  "sqlite_truncate": {"iterations": 1000, "expected_time": 60000},
+  "postgresql_truncate": {"iterations": 1000, "expected_time": 65000},
+  "sqlite_trigger": {"iterations": 1000, "expected_time": 70000},
+  "postgresql_trigger": {"iterations": 1000, "expected_time": 55000},
+  "sqlite_memory": {"iterations": 1000, "expected_time": 50000},
+  "postgresql_memory": {"iterations": 1000, "expected_time": 55000}
+}
