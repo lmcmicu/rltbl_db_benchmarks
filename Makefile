@@ -23,6 +23,28 @@ DRIVER_ARGS = --duration 1m
 
 .PHONY: rltbl_tokio
 
+rusqlite_raw:
+	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
+		--baseline-file other_baselines/driver-rusqlite-raw-$(VERSION).json \
+		--fail-on-regression \
+		rusqlite
+
+rusqlite_raw_save:
+	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) --baseline-dir other_baselines \
+		--save-baseline driver-rusqlite-raw-$(VERSION) \
+		rusqlite
+
+rltbl_rusqlite:
+	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
+		--baseline-file other_baselines/driver-rltbl-rusqlite-$(VERSION).json \
+		--fail-on-regression \
+		rltbl rusqlite
+
+rltbl_rusqlite_save:
+	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) --baseline-dir other_baselines \
+		--save-baseline driver-rltbl-rusqlite-$(VERSION) \
+		rltbl rusqlite
+
 rltbl_tokio:
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
 		--baseline-file other_baselines/driver-rltbl-tokio-$(VERSION).json \
