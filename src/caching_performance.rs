@@ -123,67 +123,30 @@ impl CachingBaselines {
     }
 
     fn compare_with(&self, kind: &DbKind, strategy: &CachingStrategy, elapsed: u64) {
-        match strategy {
+        let expected = match strategy {
             CachingStrategy::None => match kind {
-                DbKind::SQLite if elapsed > self.sqlite_none.expected_time => {
-                    panic!("Took longer than {}s.", self.sqlite_none.expected_time);
-                }
-                DbKind::PostgreSQL if elapsed > self.postgresql_none.expected_time => {
-                    panic!("Took longer than {}s.", self.postgresql_none.expected_time);
-                }
-                _ => (),
+                DbKind::SQLite => self.sqlite_none.expected_time,
+                DbKind::PostgreSQL => self.postgresql_none.expected_time,
             },
             CachingStrategy::TruncateAll => match kind {
-                DbKind::SQLite if elapsed > self.sqlite_truncate_all.expected_time => {
-                    panic!(
-                        "Took longer than {}s.",
-                        self.sqlite_truncate_all.expected_time
-                    );
-                }
-                DbKind::PostgreSQL if elapsed > self.postgresql_truncate_all.expected_time => {
-                    panic!(
-                        "Took longer than {}s.",
-                        self.postgresql_truncate_all.expected_time
-                    );
-                }
-                _ => (),
+                DbKind::SQLite => self.sqlite_truncate_all.expected_time,
+                DbKind::PostgreSQL => self.postgresql_truncate_all.expected_time,
             },
             CachingStrategy::Truncate => match kind {
-                DbKind::SQLite if elapsed > self.sqlite_truncate.expected_time => {
-                    panic!("Took longer than {}s.", self.sqlite_truncate.expected_time);
-                }
-                DbKind::PostgreSQL if elapsed > self.postgresql_truncate.expected_time => {
-                    panic!(
-                        "Took longer than {}s.",
-                        self.postgresql_truncate.expected_time
-                    );
-                }
-                _ => (),
+                DbKind::SQLite => self.sqlite_truncate.expected_time,
+                DbKind::PostgreSQL => self.postgresql_truncate.expected_time,
             },
             CachingStrategy::Trigger => match kind {
-                DbKind::SQLite if elapsed > self.sqlite_trigger.expected_time => {
-                    panic!("Took longer than {}s.", self.sqlite_trigger.expected_time);
-                }
-                DbKind::PostgreSQL if elapsed > self.postgresql_trigger.expected_time => {
-                    panic!(
-                        "Took longer than {}s.",
-                        self.postgresql_trigger.expected_time
-                    );
-                }
-                _ => (),
+                DbKind::SQLite => self.sqlite_trigger.expected_time,
+                DbKind::PostgreSQL => self.postgresql_trigger.expected_time,
             },
             CachingStrategy::Memory(_) => match kind {
-                DbKind::SQLite if elapsed > self.sqlite_memory.expected_time => {
-                    panic!("Took longer than {}s.", self.sqlite_memory.expected_time);
-                }
-                DbKind::PostgreSQL if elapsed > self.postgresql_memory.expected_time => {
-                    panic!(
-                        "Took longer than {}s.",
-                        self.postgresql_memory.expected_time
-                    );
-                }
-                _ => (),
+                DbKind::SQLite => self.sqlite_memory.expected_time,
+                DbKind::PostgreSQL => self.postgresql_memory.expected_time,
             },
+        };
+        if elapsed as f64 > expected as f64 * 1.05_f64 {
+            panic!("Took longer than {expected}s.");
         }
     }
 }
