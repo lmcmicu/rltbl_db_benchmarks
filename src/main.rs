@@ -12,7 +12,7 @@ struct Opts {
     #[clap(long, default_value = "-1")]
     seed: i64,
 
-    #[clap(long)]
+    #[clap(long, default_value = "")]
     totals_file: String,
 
     #[clap(subcommand)]
