@@ -331,7 +331,7 @@ impl CachingPerformance {
 
         println!("Completed after {elapsed}s\n");
         if let Some(_) = bench.save_baseline {
-            let expected = ((elapsed as f64 / 10_f64).ceil() as u64) * 10;
+            let expected = (((elapsed + 5) as f64 / 10_f64).ceil() as u64) * 10;
             baselines.save(totals_file, &kind, &strategy, iterations, expected);
         } else {
             baselines.compare_with(&kind, &strategy, elapsed);
