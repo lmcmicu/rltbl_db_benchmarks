@@ -26,6 +26,7 @@ DRIVER_ARGS = --duration 1m
 rltbl_tokio:
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
 		--baseline-file other_baselines/driver-rltbl-tokio-$(VERSION).json \
+		--fail-on-regression \
 		rltbl tokio-postgresql
 
 rltbl_tokio_save:
