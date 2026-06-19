@@ -89,7 +89,7 @@ impl BenchSuite for RltblDriver {
     async fn bench(&mut self, state: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         let mut values = vec![];
         for i in 0..5 {
-            for j in 0..30000 {
+            for j in 0..1000 {
                 values.push(format!("({i}, {j})"));
             }
         }
