@@ -1877,6 +1877,8 @@ dependencies = [
  "anyhow",
  "async-trait",
  "clap",
+ "deadpool-postgres",
+ "deadpool-sqlite",
  "indexmap",
  "rand 0.10.1",
  "rlt",

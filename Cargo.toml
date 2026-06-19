@@ -16,6 +16,8 @@ serde = "1.0.228"
 serde_json = "1.0.150"
 slurp = "1.0.1"
 tokio = { version = "1.52.3", features = ["full"] }
+deadpool-postgres = { version = "0.14.1", features = ["rt_tokio_1", "serde"] }
+deadpool-sqlite = { version = "0.12.1", features = ["bundled"], }
 
 [[bin]]
 name = "rltbl_db_benchmark"

@@ -7,6 +7,9 @@ use caching_performance::CachingPerformance;
 mod rltbl_driver;
 use rltbl_driver::RltblDriver;
 
+mod rusqlite_driver;
+use rusqlite_driver::RusqliteDriver;
+
 #[derive(Parser, Clone)]
 struct Opts {
     #[clap(long, default_value = "-1")]
@@ -64,7 +67,7 @@ async fn main() {
         }
         Subcommands::Rltbl { driver } => RltblDriver::test_rltbl(driver, &opts.bench).await,
         Subcommands::Tokio { } => todo!(),
-        Subcommands::Rusqlite { } => todo!(),
+        Subcommands::Rusqlite { } => RusqliteDriver::test_rusqlite(&opts.bench).await,
         Subcommands::Libsql { } => todo!(),
     }
 }
