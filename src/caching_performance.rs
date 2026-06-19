@@ -13,7 +13,7 @@ use rltbl_db::{
     memory::clear_meta_cache,
 };
 use serde::{Deserialize, Serialize};
-use std::{num::NonZero, str::FromStr, time::Instant};
+use std::{fs::File, io::Write, num::NonZero, str::FromStr, time::Instant};
 
 #[derive(Clone)]
 pub(crate) struct CachingPerformance {
@@ -45,6 +45,64 @@ struct CachingBaselines {
 }
 
 impl CachingBaselines {
+    fn save(
+        &mut self,
+        totals_file: &str,
+        kind: &DbKind,
+        strategy: &CachingStrategy,
+        iterations: u64,
+        expected_time: u64,
+    ) {
+        match kind {
+            DbKind::SQLite => match strategy {
+                CachingStrategy::None => {
+                    self.sqlite_none.iterations = iterations;
+                    self.sqlite_none.expected_time = expected_time;
+                }
+                CachingStrategy::TruncateAll => {
+                    self.sqlite_truncate_all.iterations = iterations;
+                    self.sqlite_truncate_all.expected_time = expected_time;
+                }
+                CachingStrategy::Truncate => {
+                    self.sqlite_truncate.iterations = iterations;
+                    self.sqlite_truncate.expected_time = expected_time;
+                }
+                CachingStrategy::Trigger => {
+                    self.sqlite_trigger.iterations = iterations;
+                    self.sqlite_trigger.expected_time = expected_time;
+                }
+                CachingStrategy::Memory(_) => {
+                    self.sqlite_memory.iterations = iterations;
+                    self.sqlite_memory.expected_time = expected_time;
+                }
+            },
+            DbKind::PostgreSQL => match strategy {
+                CachingStrategy::None => {
+                    self.postgresql_none.iterations = iterations;
+                    self.postgresql_none.expected_time = expected_time;
+                }
+                CachingStrategy::TruncateAll => {
+                    self.postgresql_truncate_all.iterations = iterations;
+                    self.postgresql_truncate_all.expected_time = expected_time;
+                }
+                CachingStrategy::Truncate => {
+                    self.postgresql_truncate.iterations = iterations;
+                    self.postgresql_truncate.expected_time = expected_time;
+                }
+                CachingStrategy::Trigger => {
+                    self.postgresql_trigger.iterations = iterations;
+                    self.postgresql_trigger.expected_time = expected_time;
+                }
+                CachingStrategy::Memory(_) => {
+                    self.postgresql_memory.iterations = iterations;
+                    self.postgresql_memory.expected_time = expected_time;
+                }
+            },
+        };
+        let mut output = File::create(totals_file).expect("Error creating file");
+        writeln!(output, "{}", serde_json::to_string(self).unwrap()).unwrap();
+    }
+
     fn get_iterations(&self, kind: &DbKind, strategy: &CachingStrategy) -> u64 {
         match kind {
             DbKind::SQLite => match strategy {
@@ -270,26 +328,27 @@ impl CachingPerformance {
         let strategy = CachingStrategy::from_str(&strategy).unwrap();
 
         // Read in the baselines from a JSON on disk:
-        let baselines: CachingBaselines = {
+        let mut baselines: CachingBaselines = {
             let baselines = slurp::read_all_to_string(totals_file).unwrap();
             serde_json::from_str(&baselines).unwrap()
         };
 
         // Set the number of iterations to run using the baseline info:
+        let iterations = baselines.get_iterations(&kind, &strategy);
         let mut bench = bench.clone();
-        bench.iterations = NonZero::new(baselines.get_iterations(&kind, &strategy));
+        bench.iterations = NonZero::new(iterations);
 
         println!(
             "Caching Performance Test - Starting test with \
-             db kind '{kind}' and strategy '{strategy}' for {} iterations.",
-            bench.iterations.unwrap()
+             db kind '{kind}' and strategy '{strategy}' for {iterations} iterations.",
         );
 
         // Mark the start time of the test:
         let now = Instant::now();
 
         rlt::cli::run(
-            bench,
+            //bench,
+            bench.clone(),
             CachingPerformance {
                 seed,
                 kind,
@@ -308,6 +367,11 @@ impl CachingPerformance {
         let elapsed = now.elapsed().as_secs();
 
         println!("Completed after {elapsed}s\n");
-        baselines.compare_with(&kind, &strategy, elapsed);
+        if let Some(_) = bench.save_baseline {
+            let expected = (elapsed as f64 / 10_f64).ceil() as u64;
+            baselines.save(totals_file, &kind, &strategy, iterations, expected);
+        } else {
+            baselines.compare_with(&kind, &strategy, elapsed);
+        }
     }
 }
