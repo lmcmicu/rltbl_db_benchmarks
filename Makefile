@@ -24,8 +24,14 @@ DRIVER_ARGS = --duration 1m
 .PHONY: rltbl_tokio
 
 rltbl_tokio:
-	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) rltbl tokio-postgresql
+	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) rltbl tokio-postgresql \
+		--baseline-file other_baselines/driver-rltbl-tokio-$(VERSION).json \
+		rltbl tokio-postgresql
 
+rltbl_tokio_save:
+	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) --baseline-dir other_baselines \
+		--save-baseline driver-rltbl-tokio-$(VERSION).json \
+		rltbl tokio-postgresql
 
 
 .PHONY: test_caching caching_baselines
