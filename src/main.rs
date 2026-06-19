@@ -4,6 +4,9 @@ use rlt::cli::BenchCli;
 mod caching_performance;
 use caching_performance::CachingPerformance;
 
+mod rltbl_driver;
+use rltbl_driver::RltblDriver;
+
 #[derive(Parser, Clone)]
 struct Opts {
     #[clap(long, default_value = "-1")]
@@ -31,6 +34,13 @@ enum Subcommands {
         #[clap(long, default_value = "25")]
         edit_rate: usize,
     },
+    Rltbl {
+        #[clap(default_value = "rusqlite")]
+        driver: String,
+    },
+    Tokio { },
+    Rusqlite { },
+    Libsql { },
 }
 
 #[tokio::main]
@@ -52,5 +62,9 @@ async fn main() {
             )
             .await
         }
+        Subcommands::Rltbl { driver } => RltblDriver::test_rltbl(driver, &opts.bench).await,
+        Subcommands::Tokio { } => todo!(),
+        Subcommands::Rusqlite { } => todo!(),
+        Subcommands::Libsql { } => todo!(),
     }
 }

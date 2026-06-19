@@ -308,10 +308,10 @@ impl CachingPerformance {
 
         // Mark the start time of the test:
         let now = Instant::now();
+        let save_baseline = bench.save_baseline.clone();
 
         rlt::cli::run(
-            //bench,
-            bench.clone(),
+            bench,
             CachingPerformance {
                 seed,
                 kind,
@@ -330,7 +330,7 @@ impl CachingPerformance {
         let elapsed = now.elapsed().as_secs();
 
         println!("Completed after {elapsed}s\n");
-        if let Some(_) = bench.save_baseline {
+        if let Some(_) = save_baseline {
             let expected = (((elapsed + 5) as f64 / 10_f64).ceil() as u64) * 10;
             baselines.save(totals_file, &kind, &strategy, iterations, expected);
         } else {
