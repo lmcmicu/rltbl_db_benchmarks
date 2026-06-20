@@ -53,54 +53,15 @@ impl CachingBaselines {
         iterations: u64,
         expected_time: u64,
     ) {
-        match kind {
-            DbKind::SQLite => match strategy {
-                CachingStrategy::None => {
-                    self.sqlite_none.iterations = iterations;
-                    self.sqlite_none.expected_time = expected_time;
-                }
-                CachingStrategy::TruncateAll => {
-                    self.sqlite_truncate_all.iterations = iterations;
-                    self.sqlite_truncate_all.expected_time = expected_time;
-                }
-                CachingStrategy::Truncate => {
-                    self.sqlite_truncate.iterations = iterations;
-                    self.sqlite_truncate.expected_time = expected_time;
-                }
-                CachingStrategy::Trigger => {
-                    self.sqlite_trigger.iterations = iterations;
-                    self.sqlite_trigger.expected_time = expected_time;
-                }
-                CachingStrategy::Memory(_) => {
-                    self.sqlite_memory.iterations = iterations;
-                    self.sqlite_memory.expected_time = expected_time;
-                }
-            },
-            DbKind::PostgreSQL => match strategy {
-                CachingStrategy::None => {
-                    self.postgresql_none.iterations = iterations;
-                    self.postgresql_none.expected_time = expected_time;
-                }
-                CachingStrategy::TruncateAll => {
-                    self.postgresql_truncate_all.iterations = iterations;
-                    self.postgresql_truncate_all.expected_time = expected_time;
-                }
-                CachingStrategy::Truncate => {
-                    self.postgresql_truncate.iterations = iterations;
-                    self.postgresql_truncate.expected_time = expected_time;
-                }
-                CachingStrategy::Trigger => {
-                    self.postgresql_trigger.iterations = iterations;
-                    self.postgresql_trigger.expected_time = expected_time;
-                }
-                CachingStrategy::Memory(_) => {
-                    self.postgresql_memory.iterations = iterations;
-                    self.postgresql_memory.expected_time = expected_time;
-                }
-            },
-        };
+        self.save_iterations(kind, strategy, iterations);
+        self.save_expected_time(kind, strategy, expected_time);
         let mut output = File::create(totals_file).expect("Error creating file");
-        writeln!(output, "{}", serde_json::to_string(self).unwrap()).unwrap();
+        writeln!(
+            output,
+            "{}",
+            serde_json::to_string(self).expect("Error serializing")
+        )
+        .expect("Error writing to file");
     }
 
     fn get_iterations(&self, kind: &DbKind, strategy: &CachingStrategy) -> u64 {
@@ -122,29 +83,77 @@ impl CachingBaselines {
         }
     }
 
+    fn save_iterations(&mut self, kind: &DbKind, strategy: &CachingStrategy, iterations: u64) {
+        match kind {
+            DbKind::SQLite => match strategy {
+                CachingStrategy::None => self.sqlite_none.iterations = iterations,
+                CachingStrategy::TruncateAll => self.sqlite_truncate_all.iterations = iterations,
+                CachingStrategy::Truncate => self.sqlite_truncate.iterations = iterations,
+                CachingStrategy::Trigger => self.sqlite_trigger.iterations = iterations,
+                CachingStrategy::Memory(_) => self.sqlite_memory.iterations = iterations,
+            },
+            DbKind::PostgreSQL => match strategy {
+                CachingStrategy::None => self.postgresql_none.iterations = iterations,
+                CachingStrategy::TruncateAll => {
+                    self.postgresql_truncate_all.iterations = iterations
+                }
+                CachingStrategy::Truncate => self.postgresql_truncate.iterations = iterations,
+                CachingStrategy::Trigger => self.postgresql_trigger.iterations = iterations,
+                CachingStrategy::Memory(_) => self.postgresql_memory.iterations = iterations,
+            },
+        }
+    }
+
+    fn get_expected_time(&self, kind: &DbKind, strategy: &CachingStrategy) -> u64 {
+        match kind {
+            DbKind::SQLite => match strategy {
+                CachingStrategy::None => self.sqlite_none.expected_time,
+                CachingStrategy::TruncateAll => self.sqlite_truncate_all.expected_time,
+                CachingStrategy::Truncate => self.sqlite_truncate.expected_time,
+                CachingStrategy::Trigger => self.sqlite_trigger.expected_time,
+                CachingStrategy::Memory(_) => self.sqlite_memory.expected_time,
+            },
+            DbKind::PostgreSQL => match strategy {
+                CachingStrategy::None => self.postgresql_none.expected_time,
+                CachingStrategy::TruncateAll => self.postgresql_truncate_all.expected_time,
+                CachingStrategy::Truncate => self.postgresql_truncate.expected_time,
+                CachingStrategy::Trigger => self.postgresql_trigger.expected_time,
+                CachingStrategy::Memory(_) => self.postgresql_memory.expected_time,
+            },
+        }
+    }
+
+    fn save_expected_time(
+        &mut self,
+        kind: &DbKind,
+        strategy: &CachingStrategy,
+        expected_time: u64,
+    ) {
+        match kind {
+            DbKind::SQLite => match strategy {
+                CachingStrategy::None => self.sqlite_none.expected_time = expected_time,
+                CachingStrategy::TruncateAll => {
+                    self.sqlite_truncate_all.expected_time = expected_time
+                }
+                CachingStrategy::Truncate => self.sqlite_truncate.expected_time = expected_time,
+                CachingStrategy::Trigger => self.sqlite_trigger.expected_time = expected_time,
+                CachingStrategy::Memory(_) => self.sqlite_memory.expected_time = expected_time,
+            },
+            DbKind::PostgreSQL => match strategy {
+                CachingStrategy::None => self.postgresql_none.expected_time = expected_time,
+                CachingStrategy::TruncateAll => {
+                    self.postgresql_truncate_all.expected_time = expected_time
+                }
+                CachingStrategy::Truncate => self.postgresql_truncate.expected_time = expected_time,
+                CachingStrategy::Trigger => self.postgresql_trigger.expected_time = expected_time,
+                CachingStrategy::Memory(_) => self.postgresql_memory.expected_time = expected_time,
+            },
+        }
+    }
+
     fn compare_with(&self, kind: &DbKind, strategy: &CachingStrategy, elapsed: u64) {
-        let expected = match strategy {
-            CachingStrategy::None => match kind {
-                DbKind::SQLite => self.sqlite_none.expected_time,
-                DbKind::PostgreSQL => self.postgresql_none.expected_time,
-            },
-            CachingStrategy::TruncateAll => match kind {
-                DbKind::SQLite => self.sqlite_truncate_all.expected_time,
-                DbKind::PostgreSQL => self.postgresql_truncate_all.expected_time,
-            },
-            CachingStrategy::Truncate => match kind {
-                DbKind::SQLite => self.sqlite_truncate.expected_time,
-                DbKind::PostgreSQL => self.postgresql_truncate.expected_time,
-            },
-            CachingStrategy::Trigger => match kind {
-                DbKind::SQLite => self.sqlite_trigger.expected_time,
-                DbKind::PostgreSQL => self.postgresql_trigger.expected_time,
-            },
-            CachingStrategy::Memory(_) => match kind {
-                DbKind::SQLite => self.sqlite_memory.expected_time,
-                DbKind::PostgreSQL => self.postgresql_memory.expected_time,
-            },
-        };
+        let expected = self.get_expected_time(kind, strategy);
+        // We allow for a 5% noise threshold:
         if elapsed as f64 > expected as f64 * 1.05_f64 {
             panic!("Took longer than {expected}s.");
         }
