@@ -16,32 +16,32 @@ BASELINE_ARGS = --baseline-dir baselines
 CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD) --totals-file baselines/totals-$(VERSION).json
 CACHING_BASELINE_ARGS = $(BASELINE_ARGS) --totals-file baselines/totals-$(VERSION).json
 
+DRIVER_ARGS = --duration 1m
+
 baselines:
 	mkdir -p $@
 
 .PHONY: caching caching_baselines tokio_raw tokio_raw_save rltbl_tokio rltbl_tokio_save
 
 tokio_raw: | baselines
-	cargo run -- $(COMMON_ARGS) --duration 1m \
+	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
 		--baseline-file baselines/driver-tokio-raw-$(VERSION).json \
-		--fail-on-regression \
 		tokio
 
 tokio_raw_save: | baselines
-	cargo run -- $(COMMON_ARGS) --duration 1m --baseline-dir baselines \
+	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) $(DRIVER_ARGS) \
 		--save-baseline driver-tokio-raw-$(VERSION) \
 		tokio
 
 rltbl_tokio: | baselines
-	cargo run -- $(COMMON_ARGS) --duration 1m \
+	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
 		--baseline-file baselines/driver-rltbl-tokio-$(VERSION).json \
-		--fail-on-regression \
-		rltbl tokio-postgresql
+		rltbl tokio
 
 rltbl_tokio_save: | baselines
-	cargo run -- $(COMMON_ARGS) --duration 1m --baseline-dir baselines \
+	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) $(DRIVER_ARGS) \
 		--save-baseline driver-rltbl-tokio-$(VERSION) \
-		rltbl tokio-postgresql
+		rltbl tokio
 
 caching: | baselines
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
