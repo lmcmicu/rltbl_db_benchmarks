@@ -19,7 +19,7 @@ pub(crate) struct RltblDriver {
 impl RltblDriver {
     fn new(name: &str) -> Self {
         match name.to_lowercase().as_str() {
-            "tokio" | "tokio-postgresql" => Self {
+            "tokio" | "tokio-postgres" | "tokio-postgresql" => Self {
                 driver: Driver::TokioPostgreSQL,
             },
             "rusqlite" => Self {
@@ -34,7 +34,7 @@ impl RltblDriver {
 }
 
 impl RltblDriver {
-    pub async fn test_rltbl(name: &str, bench: &BenchCli) {
+    pub async fn test(name: &str, bench: &BenchCli) {
         let rltbl_driver = RltblDriver::new(name);
         rlt::cli::run(bench.clone(), rltbl_driver).await.unwrap();
     }

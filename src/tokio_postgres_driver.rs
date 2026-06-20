@@ -5,16 +5,18 @@ use rlt::{BenchSuite, IterInfo, IterReport, Status, cli::BenchCli};
 use std::time::Instant;
 
 #[derive(Clone)]
-pub(crate) struct TokioDriver;
+pub(crate) struct TokioPostgresDriver;
 
-impl TokioDriver {
-    pub async fn test_tokio(bench: &BenchCli) {
-        rlt::cli::run(bench.clone(), TokioDriver {}).await.unwrap();
+impl TokioPostgresDriver {
+    pub async fn test(bench: &BenchCli) {
+        rlt::cli::run(bench.clone(), TokioPostgresDriver {})
+            .await
+            .unwrap();
     }
 }
 
 #[async_trait]
-impl BenchSuite for TokioDriver {
+impl BenchSuite for TokioPostgresDriver {
     type WorkerState = Pool;
 
     // The comment below is from the source code for the trait in rlt, but I think what it

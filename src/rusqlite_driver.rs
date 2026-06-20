@@ -8,7 +8,7 @@ use std::time::Instant;
 pub(crate) struct RusqliteDriver;
 
 impl RusqliteDriver {
-    pub async fn test_rusqlite(bench: &BenchCli) {
+    pub async fn test(bench: &BenchCli) {
         rlt::cli::run(bench.clone(), RusqliteDriver {})
             .await
             .unwrap();

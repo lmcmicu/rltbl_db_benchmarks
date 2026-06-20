@@ -10,8 +10,8 @@ use rltbl_driver::RltblDriver;
 mod rusqlite_driver;
 use rusqlite_driver::RusqliteDriver;
 
-mod tokio_driver;
-use tokio_driver::TokioDriver;
+mod tokio_postgres_driver;
+use tokio_postgres_driver::TokioPostgresDriver;
 
 #[derive(Parser, Clone)]
 struct Opts {
@@ -40,13 +40,13 @@ enum Subcommands {
         #[clap(long, default_value = "25")]
         edit_rate: usize,
     },
-    Rltbl {
+    RltblDriver {
         #[clap(default_value = "rusqlite")]
         driver: String,
     },
-    Tokio { },
-    Rusqlite { },
-    Libsql { },
+    TokioPostgresDriver { },
+    RusqliteDriver { },
+    // TODO: LibsqlDriver { },
 }
 
 #[tokio::main]
@@ -68,9 +68,8 @@ async fn main() {
             )
             .await
         }
-        Subcommands::Rltbl { driver } => RltblDriver::test_rltbl(driver, &opts.bench).await,
-        Subcommands::Tokio { } => TokioDriver::test_tokio(&opts.bench).await,
-        Subcommands::Rusqlite { } => RusqliteDriver::test_rusqlite(&opts.bench).await,
-        Subcommands::Libsql { } => todo!(),
+        Subcommands::RltblDriver { driver } => RltblDriver::test(driver, &opts.bench).await,
+        Subcommands::TokioPostgresDriver { } => TokioPostgresDriver::test(&opts.bench).await,
+        Subcommands::RusqliteDriver { } => RusqliteDriver::test(&opts.bench).await,
     }
 }

@@ -13,8 +13,10 @@ REGRESSION_METRICS = iters-rate,latency-mean
 COMMON_ARGS = --seed $(SEED) --collector silent --warmup $(WARMUP)
 BASELINE_ARGS = --baseline-dir baselines
 
-CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD) --totals-file baselines/totals-$(VERSION).json
-CACHING_BASELINE_ARGS = $(BASELINE_ARGS) --totals-file baselines/totals-$(VERSION).json
+CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD) \
+	--totals-file baselines/caching-totals-$(VERSION).json
+CACHING_BASELINE_ARGS = $(BASELINE_ARGS) \
+	--totals-file baselines/caching-totals-$(VERSION).json
 
 DRIVER_ARGS = --duration 1m
 
@@ -25,23 +27,23 @@ baselines:
 
 tokio_raw: | baselines
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
-		--baseline-file baselines/driver-tokio-raw-$(VERSION).json \
-		tokio
+		--baseline-file baselines/driver-tokio-postgres-raw-$(VERSION).json \
+		tokio-postgres-driver
 
 tokio_raw_save: | baselines
 	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) $(DRIVER_ARGS) \
-		--save-baseline driver-tokio-raw-$(VERSION) \
-		tokio
+		--save-baseline driver-tokio-postgres-raw-$(VERSION) \
+		tokio-postgres-driver
 
 rltbl_tokio: | baselines
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
-		--baseline-file baselines/driver-rltbl-tokio-$(VERSION).json \
-		rltbl tokio
+		--baseline-file baselines/driver-rltbl-tokio-postgres-$(VERSION).json \
+		rltbl-driver tokio-postgres
 
 rltbl_tokio_save: | baselines
 	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) $(DRIVER_ARGS) \
-		--save-baseline driver-rltbl-tokio-$(VERSION) \
-		rltbl tokio
+		--save-baseline driver-rltbl-tokio-postgres-$(VERSION) \
+		rltbl-driver tokio-postgres
 
 caching: | baselines
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
