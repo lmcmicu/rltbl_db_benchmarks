@@ -4,100 +4,95 @@ SHELL := bash
 .DELETE_ON_ERROR:
 .SUFFIXES:
 
+VERSION = v0.1.0
 SEED = 0
 WARMUP = 10
 NOISE_THRESHOLD = 5
 REGRESSION_METRICS = iters-rate,latency-mean
-VERSION = v0.1.0
 
-COMMON_ARGS = \
-	--seed $(SEED) \
-	--collector silent \
-	--warmup $(WARMUP) \
-	--totals-file caching_baselines/totals-$(VERSION).json
+COMMON_ARGS = --seed $(SEED) --collector silent --warmup $(WARMUP)
+BASELINE_ARGS = --baseline-dir baselines
 
-CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD)
-CACHINE_BASELINE_ARGS = --baseline-dir caching_baselines
+CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD) --totals-file baselines/totals-$(VERSION).json
+CACHING_BASELINE_ARGS = $(BASELINE_ARGS) --totals-file baselines/totals-$(VERSION).json
 
-DRIVER_ARGS = --duration 1m
+baselines:
+	mkdir -p $@
 
-.PHONY: rltbl_tokio
+.PHONY: caching caching_baselines tokio_raw tokio_raw_save rltbl_tokio rltbl_tokio_save
 
-tokio_raw:
-	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
-		--baseline-file other_baselines/driver-tokio-raw-$(VERSION).json \
+tokio_raw: | baselines
+	cargo run -- $(COMMON_ARGS) --duration 1m \
+		--baseline-file baselines/driver-tokio-raw-$(VERSION).json \
 		--fail-on-regression \
 		tokio
 
-tokio_raw_save:
-	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) --baseline-dir other_baselines \
+tokio_raw_save: | baselines
+	cargo run -- $(COMMON_ARGS) --duration 1m --baseline-dir baselines \
 		--save-baseline driver-tokio-raw-$(VERSION) \
 		tokio
 
-rltbl_tokio:
-	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
-		--baseline-file other_baselines/driver-rltbl-tokio-$(VERSION).json \
+rltbl_tokio: | baselines
+	cargo run -- $(COMMON_ARGS) --duration 1m \
+		--baseline-file baselines/driver-rltbl-tokio-$(VERSION).json \
 		--fail-on-regression \
 		rltbl tokio-postgresql
 
-rltbl_tokio_save:
-	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) --baseline-dir other_baselines \
+rltbl_tokio_save: | baselines
+	cargo run -- $(COMMON_ARGS) --duration 1m --baseline-dir baselines \
 		--save-baseline driver-rltbl-tokio-$(VERSION) \
 		rltbl tokio-postgresql
 
-
-.PHONY: test_caching caching_baselines
-
-test_caching:
+caching: | baselines
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file caching_baselines/sqlite-none-$(VERSION).json \
+		--baseline-file baselines/caching-sqlite-none-$(VERSION).json \
 		caching sqlite none
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file caching_baselines/postgresql-none-$(VERSION).json \
+		--baseline-file baselines/caching-postgresql-none-$(VERSION).json \
 		caching postgresql none
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file caching_baselines/sqlite-truncate_all-$(VERSION).json \
+		--baseline-file baselines/caching-sqlite-truncate_all-$(VERSION).json \
 		caching sqlite truncate_all
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file caching_baselines/postgresql-truncate_all-$(VERSION).json \
+		--baseline-file baselines/caching-postgresql-truncate_all-$(VERSION).json \
 		caching postgresql truncate_all
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file caching_baselines/sqlite-truncate-$(VERSION).json \
+		--baseline-file baselines/caching-sqlite-truncate-$(VERSION).json \
 		caching sqlite truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file caching_baselines/postgresql-truncate-$(VERSION).json \
+		--baseline-file baselines/caching-postgresql-truncate-$(VERSION).json \
 		caching postgresql truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file caching_baselines/sqlite-trigger-$(VERSION).json \
+		--baseline-file baselines/caching-sqlite-trigger-$(VERSION).json \
 		caching sqlite trigger
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file caching_baselines/postgresql-trigger-$(VERSION).json \
+		--baseline-file baselines/caching-postgresql-trigger-$(VERSION).json \
 		caching postgresql trigger
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file caching_baselines/sqlite-memory-$(VERSION).json \
+		--baseline-file baselines/caching-sqlite-memory-$(VERSION).json \
 		caching sqlite "memory:1000"
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file caching_baselines/postgresql-memory-$(VERSION).json \
+		--baseline-file baselines/caching-postgresql-memory-$(VERSION).json \
 		caching postgresql "memory:1000"
 
-caching_baselines:
-	cargo run -- $(COMMON_ARGS) $(CACHINE_BASELINE_ARGS) --save-baseline sqlite-none-$(VERSION) \
-		caching sqlite none
-	cargo run -- $(COMMON_ARGS) $(CACHINE_BASELINE_ARGS) --save-baseline postgresql-none-$(VERSION) \
-		caching postgresql none
-	cargo run -- $(COMMON_ARGS) $(CACHINE_BASELINE_ARGS) --save-baseline sqlite-truncate_all-$(VERSION) \
-		caching sqlite truncate_all
-	cargo run -- $(COMMON_ARGS) $(CACHINE_BASELINE_ARGS) --save-baseline postgresql-truncate_all-$(VERSION) \
-		caching postgresql truncate_all
-	cargo run -- $(COMMON_ARGS) $(CACHINE_BASELINE_ARGS) --save-baseline sqlite-truncate-$(VERSION) \
-		caching sqlite truncate
-	cargo run -- $(COMMON_ARGS) $(CACHINE_BASELINE_ARGS) --save-baseline postgresql-truncate-$(VERSION) \
-		caching postgresql truncate
-	cargo run -- $(COMMON_ARGS) $(CACHINE_BASELINE_ARGS) --save-baseline sqlite-trigger-$(VERSION) \
-		caching sqlite trigger
-	cargo run -- $(COMMON_ARGS) $(CACHINE_BASELINE_ARGS) --save-baseline postgresql-trigger-$(VERSION) \
-		caching postgresql trigger
-	cargo run -- $(COMMON_ARGS) $(CACHINE_BASELINE_ARGS) --save-baseline sqlite-memory-$(VERSION) \
-		caching sqlite "memory:1000"
-	cargo run -- $(COMMON_ARGS) $(CACHINE_BASELINE_ARGS) --save-baseline postgresql-memory-$(VERSION) \
-		caching postgresql "memory:1000"
+caching_baselines: | baselines
+	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
+		--save-baseline caching-sqlite-none-$(VERSION) caching sqlite none
+	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
+		--save-baseline caching-postgresql-none-$(VERSION) caching postgresql none
+	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
+		--save-baseline caching-sqlite-truncate_all-$(VERSION) caching sqlite truncate_all
+	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
+		--save-baseline caching-postgresql-truncate_all-$(VERSION) caching postgresql truncate_all
+	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
+		--save-baseline caching-sqlite-truncate-$(VERSION) caching sqlite truncate
+	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
+		--save-baseline caching-postgresql-truncate-$(VERSION) caching postgresql truncate
+	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
+		--save-baseline caching-sqlite-trigger-$(VERSION) caching sqlite trigger
+	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
+		--save-baseline caching-postgresql-trigger-$(VERSION) caching postgresql trigger
+	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
+		--save-baseline caching-sqlite-memory-$(VERSION) caching sqlite "memory:1000"
+	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
+		--save-baseline caching-postgresql-memory-$(VERSION) caching postgresql "memory:1000"
