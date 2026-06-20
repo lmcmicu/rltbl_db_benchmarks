@@ -18,9 +18,6 @@ struct Opts {
     #[clap(long, default_value = "-1")]
     seed: i64,
 
-    #[clap(long, default_value = "")]
-    totals_file: String,
-
     #[clap(subcommand)]
     command: Subcommands,
 
@@ -39,6 +36,9 @@ enum Subcommands {
 
         #[clap(long, default_value = "25")]
         edit_rate: usize,
+
+        #[clap(long, default_value = "")]
+        totals_file: String,
     },
     RltblDriver {
         #[clap(default_value = "rusqlite")]
@@ -57,13 +57,14 @@ async fn main() {
             kind,
             strategy,
             edit_rate,
+            totals_file,
         } => {
             CachingPerformance::perform_caching(
                 &kind,
                 &opts.bench,
                 strategy,
                 *edit_rate,
-                &opts.totals_file,
+                totals_file,
                 opts.seed,
             )
             .await
