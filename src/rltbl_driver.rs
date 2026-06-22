@@ -21,7 +21,6 @@ impl RltblDriver {
 
         let table = "rltbl_driver";
         pool.drop_table(table).await.unwrap();
-        pool.drop_view(&format!("{table}_view")).await.unwrap();
 
         pool.execute(&format!("CREATE TABLE {table} ( foo INT, bar INT )"), ())
             .await

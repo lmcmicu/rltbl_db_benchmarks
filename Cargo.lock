@@ -1443,8 +1443,6 @@ dependencies = [
  "bytes",
  "fallible-iterator 0.2.0",
  "postgres-protocol",
- "serde_core",
- "serde_json",
 ]
 
 [[package]]
@@ -1853,10 +1851,9 @@ dependencies = [
 [[package]]
 name = "rltbl_db"
 version = "0.1.0"
-source = "git+https://github.com/rltbl/rltbl_db?branch=add-db-type#d3d95dd53d6ce4dc6291e787bad305ab7aad18ab"
+source = "git+https://github.com/rltbl/rltbl_db?branch=old-json-rows#3b1ccc7947f6cb824fa3ba92db944ea474104ea7"
 dependencies = [
  "async-trait",
- "bytes",
  "deadpool-postgres",
  "deadpool-sqlite",
  "indexmap",

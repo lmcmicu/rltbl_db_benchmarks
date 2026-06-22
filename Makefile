@@ -17,7 +17,6 @@ CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD)
 CACHING_BASELINE_ARGS = $(BASELINE_ARGS)
 
 DRIVER_ARGS = --duration 1m
-CONNECT_ARGS = --duration 1m
 
 baselines:
 	mkdir -p $@
@@ -26,11 +25,6 @@ output:
 	mkdir -p $@
 
 .PHONY: caching caching_baselines tokio_raw tokio_raw_save rltbl_tokio rltbl_tokio_save
-
-connect: | output
-	cargo run -- $(COMMON_ARGS) $(CONNECT_ARGS) \
-		--output json --output-file output/connect-$(VERSION).json \
-		connect postgresql
 
 tokio_raw: | baselines output
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
