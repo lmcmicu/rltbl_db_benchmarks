@@ -6,15 +6,15 @@ use std::time::Instant;
 
 #[derive(Clone)]
 pub(crate) struct Connect {
-    url: String,
+    kind: String,
 }
 
 impl Connect {
-    pub async fn test(url: &str, bench: &BenchCli) {
+    pub async fn test(kind: &str, bench: &BenchCli) {
         rlt::cli::run(
             bench.clone(),
             Connect {
-                url: url.to_string(),
+                kind: kind.to_string(),
             },
         )
         .await
@@ -57,10 +57,10 @@ impl BenchSuite for Connect {
     }
 
     async fn bench(&mut self, _: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
-        let url = match self.url.to_lowercase().as_str() {
-            "tokio" | "tokio-postgres" | "tokio-postgresql" => "postgresql:///rltbl_db",
-            "rusqlite" | "libsql" => ":memory:",
-            _ => panic!("Invalid URL: '{}'", self.url),
+        let url = match self.kind.to_lowercase().as_str() {
+            "postgres" | "postgresql" => "postgresql:///rltbl_db",
+            "sqlite" => ":memory:",
+            _ => panic!("Invalid kind: '{}'", self.kind),
         };
 
         let start = Instant::now();
