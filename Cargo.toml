@@ -11,7 +11,7 @@ indexmap = { version = "2.12.0" }
 rand = "0.10.1"
 rlt = "0.5.0"
 # TODO: Get this dependency from crates.io:
-rltbl_db = { path = "../rltbl_db" }
+rltbl_db = { git = "https://github.com/rltbl/rltbl_db", branch = "add-db-type" }
 serde = "1.0.228"
 serde_json = "1.0.150"
 slurp = "1.0.1"
