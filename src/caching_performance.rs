@@ -10,7 +10,6 @@ use rltbl_db::{
     any::AnyPool,
     core::{CachingStrategy, DbQuery},
     db_kind::DbKind,
-    memory::clear_meta_cache,
 };
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::Write, num::NonZero, str::FromStr, time::Instant};
@@ -18,8 +17,7 @@ use std::{fs::File, io::Write, num::NonZero, str::FromStr, time::Instant};
 #[derive(Clone)]
 pub(crate) struct CachingPerformance {
     seed: i64,
-    kind: DbKind,
-    strategy: CachingStrategy,
+    pool: AnyPool,
     tables: Vec<String>,
     edit_rate: usize,
 }
@@ -162,7 +160,7 @@ impl CachingBaselines {
 
 #[async_trait]
 impl BenchSuite for CachingPerformance {
-    type WorkerState = AnyPool;
+    type WorkerState = String;
 
     // The comment below is from the source code for the trait in rlt, but I think what it
     // actually does is initialize the state for all of the workers.
@@ -170,14 +168,7 @@ impl BenchSuite for CachingPerformance {
     // use the worker_id.
     // Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
-        let pool = {
-            let url = match self.kind {
-                DbKind::SQLite => ":memory:",
-                DbKind::PostgreSQL => "postgresql:///rltbl_db",
-            };
-            AnyPool::connect(url).await.unwrap()
-        };
-        Ok(pool)
+        Ok("Good".to_string())
     }
 
     // The comment below is from the source code for the trait in rlt, but I think what it
@@ -187,41 +178,7 @@ impl BenchSuite for CachingPerformance {
     // That said, maybe what needs to be done to get a per-worker setup is to somehow
     // use the worker_id.
     // Setup procedure before each worker starts.
-    async fn setup(&mut self, state: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
-        clear_meta_cache().unwrap();
-        for table in &self.tables {
-            state.drop_table(table).await.unwrap();
-            state.drop_view(&format!("{table}_view")).await.unwrap();
-            state
-                .execute(&format!("CREATE TABLE {table} ( foo INT, bar INT )"), ())
-                .await
-                .unwrap();
-            state
-                .execute(
-                    &format!("CREATE VIEW {table}_view AS SELECT * FROM {table}"),
-                    (),
-                )
-                .await
-                .unwrap();
-
-            // Add a few tens of thousands of values to the table:
-            let mut values = vec![];
-            for i in 0..5 {
-                for j in 0..30000 {
-                    values.push(format!("({i}, {j})"));
-                }
-            }
-            let values = values.join(", ");
-            state
-                .execute(
-                    &format!("INSERT INTO {table} (foo, bar) VALUES {}", values),
-                    (),
-                )
-                .await
-                .unwrap();
-        }
-        state.set_cache_aware_query(true);
-        state.set_caching_strategy(&self.strategy);
+    async fn setup(&mut self, _: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
         Ok(())
     }
 
@@ -231,18 +188,15 @@ impl BenchSuite for CachingPerformance {
     // That said, maybe what needs to be done to get a per-worker teardown is to somehow
     // use the worker_id.
     // Teardown procedure after each worker finishes.
-    async fn teardown(self, state: Self::WorkerState, _info: IterInfo) -> Result<()> {
-        for table in &self.tables {
-            state.drop_table(table).await.unwrap();
-        }
+    async fn teardown(self, _: Self::WorkerState, _info: IterInfo) -> Result<()> {
         Ok(())
     }
 
-    async fn bench(&mut self, state: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
+    async fn bench(&mut self, _: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         let start = Instant::now();
 
         let select_table = self.random_table();
-        state
+        self.pool
             .cache(
                 &format!("SELECT foo, SUM(bar) FROM {select_table}_view GROUP BY foo ORDER BY foo"),
                 (),
@@ -251,7 +205,7 @@ impl BenchSuite for CachingPerformance {
             .unwrap();
         if self.edit_rate != 0 && self.random_between(0, self.edit_rate) == 0 {
             let table_to_edit = self.random_table();
-            state
+            self.pool
                 .execute(
                     &format!("INSERT INTO {table_to_edit} (foo) VALUES (1), (1)"),
                     (),
@@ -272,6 +226,58 @@ impl BenchSuite for CachingPerformance {
 }
 
 impl CachingPerformance {
+    async fn new(kind: &str, strategy: &str, edit_rate: usize, seed: i64) -> Self {
+        let url = match kind.to_lowercase().as_str() {
+            "postgres" | "postgresql" => "postgresql:///rltbl_db",
+            "sqlite" => ":memory:",
+            _ => panic!("Invalid kind: '{kind}'"),
+        };
+        let mut pool = AnyPool::connect(url).await.unwrap();
+
+        for table in ["alpha", "beta", "gamma", "delta"] {
+            pool.drop_table(table).await.unwrap();
+            pool.drop_view(&format!("{table}_view")).await.unwrap();
+            pool.execute(&format!("CREATE TABLE {table} ( foo INT, bar INT )"), ())
+                .await
+                .unwrap();
+            pool.execute(
+                &format!("CREATE VIEW {table}_view AS SELECT * FROM {table}"),
+                (),
+            )
+            .await
+            .unwrap();
+
+            // Add a few tens of thousands of values to the table:
+            let mut values = vec![];
+            for i in 0..5 {
+                for j in 0..30000 {
+                    values.push(format!("({i}, {j})"));
+                }
+            }
+            let values = values.join(", ");
+            pool.execute(
+                &format!("INSERT INTO {table} (foo, bar) VALUES {}", values),
+                (),
+            )
+            .await
+            .unwrap();
+        }
+
+        let strategy = CachingStrategy::from_str(&strategy).unwrap();
+        pool.set_caching_strategy(&strategy);
+        pool.set_cache_aware_query(true);
+
+        CachingPerformance {
+            seed,
+            pool,
+            tables: ["alpha", "beta", "gamma", "delta"]
+                .iter()
+                .map(|t| t.to_string())
+                .collect(),
+            edit_rate,
+        }
+    }
+
     fn random_between(&mut self, min: usize, max: usize) -> usize {
         let between = Uniform::try_from(min..max).unwrap();
         let mut rng = if self.seed < 0 {
@@ -296,9 +302,6 @@ impl CachingPerformance {
         totals_file: &str,
         seed: i64,
     ) {
-        let kind = DbKind::from_str(&kind).expect("Error reading database kind");
-        let strategy = CachingStrategy::from_str(&strategy).unwrap();
-
         // Read in the baselines from a JSON on disk:
         let mut baselines: CachingBaselines = {
             let baselines = slurp::read_all_to_string(totals_file).unwrap();
@@ -306,44 +309,32 @@ impl CachingPerformance {
         };
 
         // Set the number of iterations to run using the baseline info:
-        let iterations = baselines.get_iterations(&kind, &strategy);
         let mut bench = bench.clone();
+        let caching_perf = CachingPerformance::new(kind, strategy, edit_rate, seed).await;
+        let strategy = CachingStrategy::from_str(&strategy).unwrap();
+        let iterations = baselines.get_iterations(&caching_perf.pool.kind(), &strategy);
         bench.iterations = NonZero::new(iterations);
-
-        println!(
-            "Caching Performance Test - Starting test with \
-             db kind '{kind}' and strategy '{strategy}' for {iterations} iterations.",
-        );
+        let save_baseline = bench.save_baseline.clone();
 
         // Mark the start time of the test:
         let now = Instant::now();
-        let save_baseline = bench.save_baseline.clone();
 
-        rlt::cli::run(
-            bench,
-            CachingPerformance {
-                seed,
-                kind,
-                strategy,
-                tables: ["alpha", "beta", "gamma", "delta"]
-                    .iter()
-                    .map(|t| t.to_string())
-                    .collect(),
-                edit_rate,
-            },
-        )
-        .await
-        .unwrap();
+        rlt::cli::run(bench, caching_perf.clone()).await.unwrap();
 
         // Check that the overall running time is no longer than the baselines defined below:
         let elapsed = now.elapsed().as_secs();
 
-        println!("Completed after {elapsed}s\n");
         if let Some(_) = save_baseline {
             let expected = (((elapsed + 5) as f64 / 10_f64).ceil() as u64) * 10;
-            baselines.save(totals_file, &kind, &strategy, iterations, expected);
+            baselines.save(
+                totals_file,
+                &caching_perf.pool.kind(),
+                &strategy,
+                iterations,
+                expected,
+            );
         } else {
-            baselines.compare_with(&kind, &strategy, elapsed);
+            baselines.compare_with(&caching_perf.pool.kind(), &strategy, elapsed);
         }
     }
 }
