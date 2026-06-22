@@ -13,9 +13,6 @@ use rusqlite_driver::RusqliteDriver;
 mod tokio_postgres_driver;
 use tokio_postgres_driver::TokioPostgresDriver;
 
-mod connect;
-use connect::Connect;
-
 #[derive(Parser, Clone)]
 struct Opts {
     #[clap(long, default_value = "-1")]
@@ -50,10 +47,6 @@ enum Subcommands {
     TokioPostgresDriver { },
     RusqliteDriver { },
     // TODO: LibsqlDriver { },
-    Connect {
-        #[clap(default_value = ":memory:")]
-        url: String,
-    },
 }
 
 #[tokio::main]
@@ -79,6 +72,5 @@ async fn main() {
         Subcommands::RltblDriver { driver } => RltblDriver::test(driver, &opts.bench).await,
         Subcommands::TokioPostgresDriver { } => TokioPostgresDriver::test(&opts.bench).await,
         Subcommands::RusqliteDriver { } => RusqliteDriver::test(&opts.bench).await,
-        Subcommands::Connect { url } => Connect::test(url, &opts.bench).await,
     }
 }

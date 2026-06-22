@@ -16,9 +16,7 @@ impl RusqliteDriver {
 
         let conn = pool.get().await.unwrap();
         conn.interact(move |conn| {
-            let mut stmt = conn
-                .prepare("DROP TABLE IF EXISTS rltbl_driver CASCADE")
-                .unwrap();
+            let mut stmt = conn.prepare("DROP TABLE IF EXISTS rltbl_driver").unwrap();
             let _ = stmt.query([]).unwrap();
 
             let mut stmt = conn

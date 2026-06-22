@@ -9,6 +9,9 @@ pub(crate) struct TokioPostgresDriver {
     pool: Pool,
 }
 
+// TODO: try changing prepare() to prepare_cached() in tokio-postgres.rs in rltbl_db (to compare
+// apples to apples).
+
 impl TokioPostgresDriver {
     async fn new() -> Self {
         let mut cfg = Config::new();
