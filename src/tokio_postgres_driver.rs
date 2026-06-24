@@ -18,19 +18,19 @@ impl TokioPostgresDriver {
 
         let client = pool.get().await.unwrap();
         let stmt = client
-            .prepare_cached("DROP TABLE IF EXISTS rltbl_driver CASCADE")
+            .prepare("DROP TABLE IF EXISTS rltbl_driver CASCADE")
             .await
             .unwrap();
         let _ = client.query(&stmt, &[]).await.unwrap();
 
         let stmt = client
-            .prepare_cached("CREATE TABLE rltbl_driver (foo INT, bar INT)")
+            .prepare("CREATE TABLE rltbl_driver (foo INT, bar TEXT)")
             .await
             .unwrap();
         let _ = client.query(&stmt, &[]).await.unwrap();
 
         let stmt = client
-            .prepare_cached("CREATE VIEW rltbl_driver_view AS SELECT * FROM rltbl_driver")
+            .prepare("CREATE VIEW rltbl_driver_view AS SELECT * FROM rltbl_driver")
             .await
             .unwrap();
         let _ = client.query(&stmt, &[]).await.unwrap();
@@ -39,12 +39,12 @@ impl TokioPostgresDriver {
         let mut values = vec![];
         for i in 0..5 {
             for j in 0..30000 {
-                values.push(format!("({i}, {j})"));
+                values.push(format!("({i}, '{j}')"));
             }
         }
         let values = values.join(", ");
         let stmt = client
-            .prepare_cached(&format!(
+            .prepare(&format!(
                 "INSERT INTO rltbl_driver (foo, bar) VALUES {}",
                 values
             ))
@@ -98,14 +98,19 @@ impl BenchSuite for TokioPostgresDriver {
         let start = Instant::now();
 
         let client = self.pool.get().await.unwrap();
-        let sql = format!("SELECT foo, SUM(bar) FROM rltbl_driver_view GROUP BY foo ORDER BY foo");
-        let stmt = client.prepare_cached(&sql).await.unwrap();
-        let _ = client.query(&stmt, &[]).await.unwrap();
+        let sql = "SELECT foo, COUNT(bar) \
+                   FROM rltbl_driver_view \
+                   WHERE foo > $1 \
+                   GROUP BY foo \
+                   HAVING COUNT(bar) > $2 \
+                   ORDER BY foo";
+        let stmt = client.prepare(&sql).await.unwrap();
+        let _ = client.query(&stmt, &[&0_i32, &20_i64]).await.unwrap();
 
         if rand::random() && rand::random() {
-            let sql = "INSERT INTO rltbl_driver (foo) VALUES (1), (1)";
-            let stmt = client.prepare_cached(sql).await.unwrap();
-            let _ = client.query(&stmt, &[]).await.unwrap();
+            let sql = "INSERT INTO rltbl_driver (foo, bar) VALUES ($1, $2)";
+            let stmt = client.prepare(&sql).await.unwrap();
+            let _ = client.query(&stmt, &[&1_i32, &"1"]).await.unwrap();
         }
 
         let duration = start.elapsed();

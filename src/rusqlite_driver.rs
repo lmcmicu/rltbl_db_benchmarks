@@ -20,7 +20,7 @@ impl RusqliteDriver {
             let _ = stmt.query([]).unwrap();
 
             let mut stmt = conn
-                .prepare("CREATE TABLE rltbl_driver (foo INT, bar INT)")
+                .prepare("CREATE TABLE rltbl_driver (foo INT, bar TEXT)")
                 .unwrap();
             let _ = stmt.query([]).unwrap();
 
@@ -33,7 +33,7 @@ impl RusqliteDriver {
             let mut values = vec![];
             for i in 0..5 {
                 for j in 0..30000 {
-                    values.push(format!("({i}, {j})"));
+                    values.push(format!("({i}, '{j}')"));
                 }
             }
             let values = values.join(", ");
@@ -96,16 +96,19 @@ impl BenchSuite for RusqliteDriver {
 
         let conn = self.pool.get().await.unwrap();
         conn.interact(move |conn| {
-            let mut stmt = conn
-                .prepare("SELECT foo, SUM(bar) FROM rltbl_driver_view GROUP BY foo ORDER BY foo")
-                .unwrap();
-            let _ = stmt.query([]).unwrap();
+            let sql = "SELECT foo, COUNT(bar) \
+                       FROM rltbl_driver_view \
+                       WHERE foo > ?1 \
+                       GROUP BY foo \
+                       HAVING COUNT(bar) > ?2 \
+                       ORDER BY foo";
+            let mut stmt = conn.prepare(&sql).unwrap();
+            let _ = stmt.query([&0, &20]).unwrap();
 
             if rand::random() && rand::random() {
-                let mut stmt = conn
-                    .prepare("INSERT INTO rltbl_driver (foo) VALUES (1), (1)")
-                    .unwrap();
-                let _ = stmt.query([]).unwrap();
+                let sql = "INSERT INTO rltbl_driver (foo, bar) VALUES (?1, ?2)";
+                let mut stmt = conn.prepare(&sql).unwrap();
+                let _ = stmt.query([&1, &1]).unwrap();
             }
         })
         .await
