@@ -2,7 +2,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use rand;
 use rlt::{BenchSuite, IterInfo, IterReport, Status, cli::BenchCli};
-use rltbl_db::{any::AnyPool, core::DbQuery};
+use rltbl_db::{any::AnyPool, core::DbQuery, params};
 use std::time::Instant;
 
 #[derive(Clone)]
@@ -22,7 +22,7 @@ impl RltblDriver {
         let table = "rltbl_driver";
         pool.drop_table(table).await.unwrap();
 
-        pool.execute(&format!("CREATE TABLE {table} ( foo INT, bar INT )"), ())
+        pool.execute(&format!("CREATE TABLE {table} ( foo INT, bar TEXT )"), ())
             .await
             .unwrap();
         pool.execute(
@@ -36,7 +36,7 @@ impl RltblDriver {
         let mut values = vec![];
         for i in 0..5 {
             for j in 0..30000 {
-                values.push(format!("({i}, {j})"));
+                values.push(format!("({i}, '{j}')"));
             }
         }
         let values = values.join(", ");
@@ -95,8 +95,16 @@ impl BenchSuite for RltblDriver {
 
         self.pool
             .query(
-                &format!("SELECT foo, SUM(bar) FROM rltbl_driver_view GROUP BY foo ORDER BY foo"),
-                (),
+                &format!(
+                    "SELECT foo, COUNT(bar) \
+                     FROM rltbl_driver_view \
+                     WHERE foo > {pp}1
+                     GROUP BY foo \
+                     HAVING COUNT(bar) > {pp}2 \
+                     ORDER BY foo",
+                    pp = self.pool.kind().param_prefix(),
+                ),
+                &params![0_i32, 20_i64],
             )
             .await
             .unwrap();
@@ -104,8 +112,11 @@ impl BenchSuite for RltblDriver {
         if rand::random() && rand::random() {
             self.pool
                 .execute(
-                    &format!("INSERT INTO rltbl_driver (foo) VALUES (1), (1)"),
-                    (),
+                    &format!(
+                        "INSERT INTO rltbl_driver (foo, bar) VALUES ({pp}1, {pp}2)",
+                        pp = self.pool.kind().param_prefix()
+                    ),
+                    &params![1_i32, "1"],
                 )
                 .await
                 .unwrap();
