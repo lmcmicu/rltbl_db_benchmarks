@@ -98,14 +98,12 @@ impl BenchSuite for TokioPostgresDriver {
         let start = Instant::now();
 
         let client = self.pool.get().await.unwrap();
-        let sql = "SELECT foo, COUNT(bar) \
+        let sql = "SELECT foo, bar \
                    FROM rltbl_driver_view \
                    WHERE foo > $1 \
-                   GROUP BY foo \
-                   HAVING COUNT(bar) > $2 \
                    ORDER BY foo";
         let stmt = client.prepare(&sql).await.unwrap();
-        let _ = client.query(&stmt, &[&0_i32, &20_i64]).await.unwrap();
+        let _ = client.query(&stmt, &[&0_i32]).await.unwrap();
 
         if rand::random() && rand::random() {
             let sql = "INSERT INTO rltbl_driver (foo, bar) VALUES ($1, $2)";
