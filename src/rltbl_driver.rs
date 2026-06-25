@@ -96,15 +96,13 @@ impl BenchSuite for RltblDriver {
         self.pool
             .query(
                 &format!(
-                    "SELECT foo, COUNT(bar) \
+                    "SELECT foo, bar \
                      FROM rltbl_driver_view \
                      WHERE foo > {pp}1
-                     GROUP BY foo \
-                     HAVING COUNT(bar) > {pp}2 \
                      ORDER BY foo",
                     pp = self.pool.kind().param_prefix(),
                 ),
-                &params![0_i32, 20_i64],
+                &params![0_i32],
             )
             .await
             .unwrap();
