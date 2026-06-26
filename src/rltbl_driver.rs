@@ -97,7 +97,8 @@ impl BenchSuite for RltblDriver {
     async fn bench(&mut self, _: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         let start = Instant::now();
 
-        self.pool
+        let _ = self
+            .pool
             .query(
                 &format!(
                     "SELECT foo, bar \
