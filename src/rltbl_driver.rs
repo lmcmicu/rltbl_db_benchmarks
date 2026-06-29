@@ -93,7 +93,7 @@ impl BenchSuite for RltblDriver {
     async fn bench(&mut self, _: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         let start = Instant::now();
 
-        let _ = self
+        let rows = self
             .pool
             .query(
                 &format!(
@@ -107,6 +107,10 @@ impl BenchSuite for RltblDriver {
             )
             .await
             .unwrap();
+
+        for row in rows.iter() {
+            let _ = row.get("foo").unwrap();
+        }
 
         if rand::random() && rand::random() {
             self.pool

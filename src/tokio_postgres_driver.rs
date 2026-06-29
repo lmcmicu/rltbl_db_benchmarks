@@ -103,7 +103,11 @@ impl BenchSuite for TokioPostgresDriver {
                    WHERE foo > $1 \
                    ORDER BY foo";
         let stmt = client.prepare(&sql).await.unwrap();
-        let _ = client.query(&stmt, &[&0_i32]).await.unwrap();
+        let rows = client.query(&stmt, &[&0_i32]).await.unwrap();
+
+        for row in rows.iter() {
+            let _ = row.try_get::<usize, Option<i32>>(0).unwrap().unwrap();
+        }
 
         if rand::random() && rand::random() {
             let sql = "INSERT INTO rltbl_driver (foo, bar) VALUES ($1, $2)";
