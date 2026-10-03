@@ -56,70 +56,70 @@ caching: | baselines output
 		--output json --output-file output/caching-sqlite-none-$(VERSION).json \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite none
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file baselines/caching-postgresql-none-$(VERSION).json \
-		--output json --output-file output/caching-postgresql-none-$(VERSION).json \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgresql none
+		--baseline-file baselines/caching-postgres-none-$(VERSION).json \
+		--output json --output-file output/caching-postgres-none-$(VERSION).json \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres none
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-sqlite-truncate_all-$(VERSION).json \
 		--output json --output-file output/caching-sqlite-truncate_all-$(VERSION).json \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite truncate_all
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file baselines/caching-postgresql-truncate_all-$(VERSION).json \
-		--output json --output-file output/caching-postgresql-truncate_all-$(VERSION).json \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgresql truncate_all
+		--baseline-file baselines/caching-postgres-truncate_all-$(VERSION).json \
+		--output json --output-file output/caching-postgres-truncate_all-$(VERSION).json \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres truncate_all
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-sqlite-truncate-$(VERSION).json \
 		--output json --output-file output/caching-sqlite-truncate-$(VERSION).json \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file baselines/caching-postgresql-truncate-$(VERSION).json \
-		--output json --output-file output/caching-postgresql-truncate-$(VERSION).json \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgresql truncate
+		--baseline-file baselines/caching-postgres-truncate-$(VERSION).json \
+		--output json --output-file output/caching-postgres-truncate-$(VERSION).json \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-sqlite-trigger-$(VERSION).json \
 		--output json --output-file output/caching-sqlite-trigger-$(VERSION).json \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite trigger
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file baselines/caching-postgresql-trigger-$(VERSION).json \
-		--output json --output-file output/caching-postgresql-trigger-$(VERSION).json \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgresql trigger
+		--baseline-file baselines/caching-postgres-trigger-$(VERSION).json \
+		--output json --output-file output/caching-postgres-trigger-$(VERSION).json \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres trigger
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-sqlite-memory-$(VERSION).json \
 		--output json --output-file output/caching-sqlite-memory-$(VERSION).json \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite "memory:1000"
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
-		--baseline-file baselines/caching-postgresql-memory-$(VERSION).json \
-		--output json --output-file output/caching-postgresql-memory-$(VERSION).json \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgresql "memory:1000"
+		--baseline-file baselines/caching-postgres-memory-$(VERSION).json \
+		--output json --output-file output/caching-postgres-memory-$(VERSION).json \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres "memory:1000"
 
 caching_baselines: | baselines
 	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
 		--save-baseline caching-sqlite-none-$(VERSION) \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite none
 	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-postgresql-none-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgresql none
+		--save-baseline caching-postgres-none-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres none
 	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
 		--save-baseline caching-sqlite-truncate_all-$(VERSION) \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite truncate_all
 	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-postgresql-truncate_all-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgresql truncate_all
+		--save-baseline caching-postgres-truncate_all-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres truncate_all
 	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
 		--save-baseline caching-sqlite-truncate-$(VERSION) \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-postgresql-truncate-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgresql truncate
+		--save-baseline caching-postgres-truncate-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
 		--save-baseline caching-sqlite-trigger-$(VERSION) \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite trigger
 	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-postgresql-trigger-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgresql trigger
+		--save-baseline caching-postgres-trigger-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres trigger
 	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
 		--save-baseline caching-sqlite-memory-$(VERSION) \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite "memory:1000"
 	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-postgresql-memory-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgresql "memory:1000"
+		--save-baseline caching-postgres-memory-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres "memory:1000"
