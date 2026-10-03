@@ -24,7 +24,9 @@ baselines:
 output:
 	mkdir -p $@
 
-.PHONY: caching caching_baselines tokio_raw tokio_raw_save rltbl_tokio rltbl_tokio_save
+.PHONY: caching caching_baselines tokio_raw tokio_raw_save rltbl_tokio rltbl_tokio_save save_baselines
+
+save_baselines: tokio_raw_save rltbl_tokio_save caching_baselines
 
 tokio_raw: | baselines output
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
