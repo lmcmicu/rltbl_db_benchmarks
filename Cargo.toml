@@ -4,16 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.102"
+anyhow = "1.0.100"
 async-trait = "0.1.89"
 clap = "4.6.1"
 indexmap = { version = "2.12.0" }
-rand = "0.10.1"
+rand = "0.9.2"
 rlt = "0.5.0"
-# rltbl_db = { git = "https://github.com/rltbl/rltbl_db", branch = "rewrite-api" }
-rltbl_db = { path = "../rltbl_db" }
-serde = "1.0.228"
-serde_json = "1.0.150"
+rltbl_db = { path = ".." }
+serde = "1.0.226"
+serde_json = "1.0.145"
 slurp = "1.0.1"
 tokio = { version = "1.52.3", features = ["full"] }
 deadpool-postgres = { version = "0.14.1", features = ["rt_tokio_1", "serde"] }

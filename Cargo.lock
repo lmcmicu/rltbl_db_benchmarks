@@ -1763,10 +1763,8 @@ dependencies = [
 name = "rltbl_db"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "async-trait",
  "bytes",
- "clap",
  "csv",
  "deadpool-postgres",
  "deadpool-sqlite",
@@ -1775,12 +1773,9 @@ dependencies = [
  "lazy_static",
  "rand 0.9.4",
  "regex",
- "rlt",
  "rust_decimal",
  "serde",
  "serde_json",
- "slurp",
- "tokio",
  "tokio-postgres",
  "tree-sitter",
  "tree-sitter-sequel",
@@ -1796,7 +1791,7 @@ dependencies = [
  "deadpool-postgres",
  "deadpool-sqlite",
  "indexmap",
- "rand 0.10.1",
+ "rand 0.9.4",
  "rlt",
  "rltbl_db",
  "serde",
