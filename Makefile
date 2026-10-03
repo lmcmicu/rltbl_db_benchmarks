@@ -32,6 +32,7 @@ tokio_raw: | baselines output
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
 		--output json --output-file output/driver-tokio-postgres-raw-$(VERSION).json \
 		--baseline-file baselines/driver-tokio-postgres-raw-$(VERSION).json \
+		--fail-on-regression \
 		tokio-postgres-driver
 
 tokio_raw_save: | baselines
@@ -43,6 +44,7 @@ rltbl_tokio: | baselines output
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
 		--output json --output-file output/driver-rltbl-tokio-postgres-$(VERSION).json \
 		--baseline-file baselines/driver-rltbl-tokio-postgres-$(VERSION).json \
+		--fail-on-regression \
 		rltbl-driver tokio-postgres
 
 rltbl_tokio_save: | baselines
@@ -54,42 +56,52 @@ caching: | baselines output
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-sqlite-none-$(VERSION).json \
 		--output json --output-file output/caching-sqlite-none-$(VERSION).json \
+		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite none
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-postgres-none-$(VERSION).json \
 		--output json --output-file output/caching-postgres-none-$(VERSION).json \
+		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json postgres none
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-sqlite-truncate_all-$(VERSION).json \
 		--output json --output-file output/caching-sqlite-truncate_all-$(VERSION).json \
+		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite truncate_all
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-postgres-truncate_all-$(VERSION).json \
 		--output json --output-file output/caching-postgres-truncate_all-$(VERSION).json \
+		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json postgres truncate_all
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-sqlite-truncate-$(VERSION).json \
 		--output json --output-file output/caching-sqlite-truncate-$(VERSION).json \
+		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-postgres-truncate-$(VERSION).json \
 		--output json --output-file output/caching-postgres-truncate-$(VERSION).json \
+		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json postgres truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-sqlite-trigger-$(VERSION).json \
 		--output json --output-file output/caching-sqlite-trigger-$(VERSION).json \
+		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite trigger
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-postgres-trigger-$(VERSION).json \
 		--output json --output-file output/caching-postgres-trigger-$(VERSION).json \
+		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json postgres trigger
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-sqlite-memory-$(VERSION).json \
 		--output json --output-file output/caching-sqlite-memory-$(VERSION).json \
+		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite "memory:1000"
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-postgres-memory-$(VERSION).json \
 		--output json --output-file output/caching-postgres-memory-$(VERSION).json \
+		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json postgres "memory:1000"
 
 caching_baselines: | baselines

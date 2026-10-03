@@ -85,7 +85,7 @@ impl BenchSuite for RltblDriver {
 
     /// The actual content of the test.
     async fn bench(&mut self, pool: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
-        if self.tests_run % 100 == 1 {
+        if self.tests_run > 0 && self.tests_run % 50 == 0 {
             eprintln!("{} tests run for '{}'.", self.tests_run, self.name);
         }
         let start = Instant::now();
