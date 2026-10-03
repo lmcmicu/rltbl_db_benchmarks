@@ -266,7 +266,7 @@ impl CachingBaselines {
                 CachingStrategy::Trigger => self.postgresql_trigger.iterations,
                 CachingStrategy::Memory(_) => self.postgresql_memory.iterations,
             },
-            _ => panic!(),
+            _ => panic!("{kind}"),
         }
     }
 
@@ -288,7 +288,7 @@ impl CachingBaselines {
                 CachingStrategy::Trigger => self.postgresql_trigger.iterations = iterations,
                 CachingStrategy::Memory(_) => self.postgresql_memory.iterations = iterations,
             },
-            _ => panic!(),
+            _ => panic!("{kind}"),
         }
     }
 
@@ -308,7 +308,7 @@ impl CachingBaselines {
                 CachingStrategy::Trigger => self.postgresql_trigger.expected_time,
                 CachingStrategy::Memory(_) => self.postgresql_memory.expected_time,
             },
-            _ => panic!(),
+            _ => panic!("{kind}"),
         }
     }
 
@@ -332,7 +332,7 @@ impl CachingBaselines {
                 CachingStrategy::Trigger => self.postgresql_trigger.expected_time = expected_time,
                 CachingStrategy::Memory(_) => self.postgresql_memory.expected_time = expected_time,
             },
-            _ => panic!(),
+            _ => panic!("{kind}"),
         }
     }
 
