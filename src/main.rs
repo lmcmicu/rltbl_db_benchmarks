@@ -59,7 +59,7 @@ async fn main() {
             edit_rate,
             totals_file,
         } => {
-            CachingPerformance::perform_caching(
+            CachingPerformance::test(
                 &kind,
                 &opts.bench,
                 strategy,
@@ -70,7 +70,13 @@ async fn main() {
             .await
         }
         Subcommands::RltblDriver { driver } => RltblDriver::test(driver, &opts.bench).await,
-        Subcommands::TokioPostgresDriver { } => TokioPostgresDriver::test(&opts.bench).await,
-        Subcommands::RusqliteDriver { } => RusqliteDriver::test(&opts.bench).await,
-    }
+        Subcommands::TokioPostgresDriver { } => {
+            eprintln!("Feature 'tokio-postgres' must be installed.");
+            TokioPostgresDriver::test(&opts.bench).await
+        },
+        Subcommands::RusqliteDriver { } => {
+            eprintln!("Feature 'rusqlite' must be installed.");
+            RusqliteDriver::test(&opts.bench).await
+        },
+    };
 }
