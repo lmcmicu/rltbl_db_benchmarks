@@ -83,10 +83,9 @@ impl BenchSuite for RusqliteDriver {
     }
 
     async fn bench(&mut self, pool: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
-        eprintln!(
-            "Running test '{}', iteration #{}.",
-            self.name, self.tests_run
-        );
+        if self.tests_run % 100 == 1 {
+            eprintln!("{} tests run for '{}'.", self.tests_run, self.name);
+        }
         let start = Instant::now();
 
         let conn = pool.get().await.unwrap();
