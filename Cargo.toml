@@ -1,5 +1,5 @@
 [package]
-name = "rltbl_db_benchmark"
+name = "rltbl_db_benchmarks"
 version = "0.1.0"
 edition = "2024"
 
@@ -20,5 +20,5 @@ deadpool-sqlite = { version = "0.12.1", features = ["bundled"], }
 deadpool-libsql = "0.1.1"
 
 [[bin]]
-name = "rltbl_db_benchmark"
+name = "rltbl_db_benchmarks"
 path = "src/main.rs"

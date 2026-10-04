@@ -2529,7 +2529,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rltbl_db_benchmark"
+name = "rltbl_db_benchmarks"
 version = "0.1.0"
 dependencies = [
  "anyhow",
