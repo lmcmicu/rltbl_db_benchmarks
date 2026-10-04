@@ -13,7 +13,7 @@ COMMON_ARGS = --seed $(SEED) --collector silent --warmup $(WARMUP)
 
 SAVE_ARGS = --baseline-dir baselines
 CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD) --regression-metrics $(REGRESSION_METRICS)
-DRIVER_ARGS = --duration 1m --noise-threshold $(NOISE_THRESHOLD) --regression-metrics $(REGRESSION_METRICS
+DRIVER_ARGS = --duration 1m --noise-threshold $(NOISE_THRESHOLD) --regression-metrics $(REGRESSION_METRICS)
 
 baselines:
 	mkdir -p $@
