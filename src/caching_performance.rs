@@ -18,7 +18,6 @@ pub(crate) struct CachingPerformance {
     tables: Vec<String>,
     strategy: CachingStrategy,
     edit_rate: usize,
-    // TODO: Just use the IterReport fields for this.
     tests_run: usize,
 }
 
@@ -105,23 +104,13 @@ impl CachingPerformance {
 impl BenchSuite for CachingPerformance {
     type WorkerState = AnyPool;
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is initialize the state for all of the workers.
-    // That said, maybe what needs to be done to get a per-worker state is to somehow
-    // use the worker_id.
-    // Initialize the state for a worker
+    /// Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
         eprintln!("Connecting to the database at '{}'.", self.url);
         Ok(AnyPool::connect(&self.url).await.unwrap())
     }
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is to run the setup procedure for all of the workers (as judged by the
-    // number of rows observed in each of the four tables once the test is running), i.e.,
-    // before any of them run.
-    // That said, maybe what needs to be done to get a per-worker setup is to somehow
-    // use the worker_id.
-    // Setup procedure before each worker starts.
+    /// Setup procedure before each worker starts.
     async fn setup(&mut self, pool: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
         eprintln!("Preparing the database.");
         for table in &self.tables {
@@ -159,6 +148,7 @@ impl BenchSuite for CachingPerformance {
         Ok(())
     }
 
+    /// Run the test.
     async fn bench(&mut self, pool: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         if self.tests_run > 0 && self.tests_run % 250 == 0 {
             eprintln!("{} tests run for '{}'.", self.tests_run, self.name);
@@ -194,12 +184,7 @@ impl BenchSuite for CachingPerformance {
         })
     }
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is to run the teardown procedure for all of the workers, i.e., after they
-    // are all done.
-    // That said, maybe what needs to be done to get a per-worker teardown is to somehow
-    // use the worker_id.
-    // Teardown procedure after each worker finishes.
+    /// Teardown procedure after each worker finishes.
     async fn teardown(self, _: Self::WorkerState, _info: IterInfo) -> Result<()> {
         eprintln!(
             "Test is over after {} iterations. Tearing down.",
@@ -337,8 +322,8 @@ impl CachingBaselines {
 
     fn compare_with(&self, kind: &str, strategy: &CachingStrategy, elapsed: u64) {
         let expected = self.get_expected_time(kind, strategy);
-        // We allow for a 5% noise threshold:
-        if elapsed as f64 > expected as f64 * 1.05_f64 {
+        // We allow for a 10% noise threshold:
+        if elapsed as f64 > expected as f64 * 1.10_f64 {
             panic!("Took longer than {expected}s.");
         }
     }

@@ -7,7 +7,6 @@ use std::time::Instant;
 #[derive(Clone)]
 pub(crate) struct LibsqlDriver {
     name: &'static str,
-    // TODO: Just use the IterReport fields for this.
     tests_run: usize,
 }
 
@@ -25,11 +24,7 @@ impl LibsqlDriver {
 impl BenchSuite for LibsqlDriver {
     type WorkerState = Pool;
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is initialize the state for all of the workers.
-    // That said, maybe what needs to be done to get a per-worker state is to somehow
-    // use the worker_id.
-    // Initialize the state for a worker
+    /// Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
         eprintln!("Connecting to the sqlite database using {}.", self.name);
         let db = Builder::new_local(":memory:").build().await?;
@@ -38,13 +33,7 @@ impl BenchSuite for LibsqlDriver {
         Ok(pool)
     }
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is to run the setup procedure for all of the workers (as judged by the
-    // number of rows observed in each of the four tables once the test is running), i.e.,
-    // before any of them run.
-    // That said, maybe what needs to be done to get a per-worker setup is to somehow
-    // use the worker_id.
-    // Setup procedure before each worker starts.
+    /// Setup procedure before each worker starts.
     async fn setup(&mut self, pool: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
         eprintln!("Preparing the database.");
         let conn = pool.get().await?;
@@ -72,24 +61,25 @@ impl BenchSuite for LibsqlDriver {
         Ok(())
     }
 
+    /// Run the test.
     async fn bench(&mut self, pool: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         let start = Instant::now();
 
-        let conn = pool.get().await.unwrap();
+        let conn = pool.get().await?;
         let sql = "SELECT foo, COUNT(bar) \
                    FROM rltbl_driver_view \
                    WHERE foo > ?1 \
                    GROUP BY foo \
                    HAVING COUNT(bar) > ?2 \
                    ORDER BY foo";
-        let mut rows = conn.query(sql, [0, 20]).await.unwrap();
-        while let Some(_row) = rows.next().await.unwrap() {
+        let mut rows = conn.query(sql, [0, 20]).await?;
+        while let Some(_row) = rows.next().await? {
             // Do nothing. The point of this loop is just to consume the iterator.
         }
 
         if rand::random() && rand::random() {
             let sql = "INSERT INTO rltbl_driver (foo, bar) VALUES (?1, ?2)";
-            let _ = conn.query(sql, [1, 1]).await.unwrap();
+            let _ = conn.query(sql, [1, 1]).await?;
         }
 
         let duration = start.elapsed();
@@ -104,11 +94,6 @@ impl BenchSuite for LibsqlDriver {
         })
     }
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is to run the teardown procedure for all of the workers, i.e., after they
-    // are all done.
-    // That said, maybe what needs to be done to get a per-worker teardown is to somehow
-    // use the worker_id.
     // Teardown procedure after each worker finishes.
     async fn teardown(self, _pool: Self::WorkerState, _info: IterInfo) -> Result<()> {
         eprintln!(

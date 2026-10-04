@@ -7,7 +7,6 @@ use std::time::Instant;
 #[derive(Clone)]
 pub(crate) struct RusqliteDriver {
     name: &'static str,
-    // TODO: Just use the IterReport fields for this.
     tests_run: usize,
 }
 
@@ -25,28 +24,18 @@ impl RusqliteDriver {
 impl BenchSuite for RusqliteDriver {
     type WorkerState = Pool;
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is initialize the state for all of the workers.
-    // That said, maybe what needs to be done to get a per-worker state is to somehow
-    // use the worker_id.
-    // Initialize the state for a worker
+    /// Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
         eprintln!("Connecting to the sqlite database using {}.", self.name);
         let cfg = Config::new(":memory:");
-        let pool = cfg.create_pool(Runtime::Tokio1).unwrap();
+        let pool = cfg.create_pool(Runtime::Tokio1)?;
         Ok(pool)
     }
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is to run the setup procedure for all of the workers (as judged by the
-    // number of rows observed in each of the four tables once the test is running), i.e.,
-    // before any of them run.
-    // That said, maybe what needs to be done to get a per-worker setup is to somehow
-    // use the worker_id.
-    // Setup procedure before each worker starts.
+    /// Setup procedure before each worker starts.
     async fn setup(&mut self, pool: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
         eprintln!("Preparing the database.");
-        let conn = pool.get().await.unwrap();
+        let conn = pool.get().await?;
         conn.interact(move |conn| {
             let mut sql = String::from(
                 "DROP TABLE IF EXISTS rltbl_driver; \
@@ -73,10 +62,11 @@ impl BenchSuite for RusqliteDriver {
         Ok(())
     }
 
+    /// Run the test.
     async fn bench(&mut self, pool: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         let start = Instant::now();
 
-        let conn = pool.get().await.unwrap();
+        let conn = pool.get().await?;
         conn.interact(move |conn| {
             let sql = "SELECT foo, COUNT(bar) \
                        FROM rltbl_driver_view \
@@ -111,11 +101,6 @@ impl BenchSuite for RusqliteDriver {
         })
     }
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is to run the teardown procedure for all of the workers, i.e., after they
-    // are all done.
-    // That said, maybe what needs to be done to get a per-worker teardown is to somehow
-    // use the worker_id.
     // Teardown procedure after each worker finishes.
     async fn teardown(self, _pool: Self::WorkerState, _info: IterInfo) -> Result<()> {
         eprintln!(

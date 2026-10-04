@@ -9,7 +9,6 @@ use std::time::Instant;
 pub(crate) struct RltblDriver {
     name: &'static str,
     url: String,
-    // TODO: Just use the IterReport fields for this.
     tests_run: usize,
 }
 
@@ -34,40 +33,23 @@ impl RltblDriver {
 impl BenchSuite for RltblDriver {
     type WorkerState = AnyPool;
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is initialize the state for all of the workers.
-    // That said, maybe what needs to be done to get a per-worker state is to somehow
-    // use the worker_id. In any case ...
     /// Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
-        eprintln!(
-            "Connecting to the database using {} at '{}'.",
-            self.name, self.url
-        );
-        Ok(AnyPool::connect(&self.url).await.unwrap())
+        Ok(AnyPool::connect(&self.url).await?)
     }
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is to run the setup procedure for all of the workers (as judged by the
-    // number of rows observed in each of the four tables once the test is running), i.e.,
-    // before any of them run.
-    // That said, maybe what needs to be done to get a per-worker setup is to somehow
-    // use the worker_id.
     /// Setup procedure before each worker starts.
     async fn setup(&mut self, pool: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
-        eprintln!("Preparing the database.");
         let table = "rltbl_driver";
-        pool.drop_table(table).await.unwrap();
+        pool.drop_table(table).await?;
 
         pool.execute(&format!("CREATE TABLE {table} ( foo INT, bar TEXT )"), ())
-            .await
-            .unwrap();
+            .await?;
         pool.execute(
             &format!("CREATE VIEW {table}_view AS SELECT * FROM {table}"),
             (),
         )
-        .await
-        .unwrap();
+        .await?;
 
         // Add a few tens of thousands of values to the table:
         let mut values = vec![];
@@ -81,12 +63,11 @@ impl BenchSuite for RltblDriver {
             &format!("INSERT INTO {table} (foo, bar) VALUES {}", values),
             (),
         )
-        .await
-        .unwrap();
+        .await?;
         Ok(())
     }
 
-    /// The actual content of the test.
+    /// Run the test.
     async fn bench(&mut self, pool: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         let start = Instant::now();
 
@@ -101,9 +82,9 @@ impl BenchSuite for RltblDriver {
                 ),
                 &values![0_i32],
             )
-            .await
-            .unwrap();
+            .await?;
 
+        // Consume the iterator:
         for row in rows.iter() {
             let _ = row.get("foo").unwrap();
         }
@@ -116,8 +97,7 @@ impl BenchSuite for RltblDriver {
                 ),
                 &values![1_i32, "1"],
             )
-            .await
-            .unwrap();
+            .await?;
         }
 
         let duration = start.elapsed();
@@ -132,17 +112,8 @@ impl BenchSuite for RltblDriver {
         })
     }
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is to run the teardown procedure for all of the workers, i.e., after they
-    // are all done.
-    // That said, maybe what needs to be done to get a per-worker teardown is to somehow
-    // use the worker_id.
     /// Teardown procedure after each worker finishes.
     async fn teardown(self, _pool: Self::WorkerState, _info: IterInfo) -> Result<()> {
-        eprintln!(
-            "Test is over after {} iterations. Tearing down.",
-            self.tests_run
-        );
         Ok(())
     }
 }
