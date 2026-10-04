@@ -17,6 +17,7 @@ slurp = "1.0.1"
 tokio = { version = "1.52.3", features = ["full"] }
 deadpool-postgres = { version = "0.14.1", features = ["rt_tokio_1", "serde"] }
 deadpool-sqlite = { version = "0.12.1", features = ["bundled"], }
+deadpool-libsql = "0.1.1"
 
 [[bin]]
 name = "rltbl_db_benchmark"

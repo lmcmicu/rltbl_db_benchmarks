@@ -7,11 +7,15 @@ use caching_performance::CachingPerformance;
 mod rltbl_driver;
 use rltbl_driver::RltblDriver;
 
+mod tokio_postgres_driver;
+use tokio_postgres_driver::TokioPostgresDriver;
+
 mod rusqlite_driver;
 use rusqlite_driver::RusqliteDriver;
 
-mod tokio_postgres_driver;
-use tokio_postgres_driver::TokioPostgresDriver;
+mod libsql_driver;
+use libsql_driver::LibsqlDriver;
+
 
 #[derive(Parser, Clone)]
 struct Opts {
@@ -46,7 +50,7 @@ enum Subcommands {
     },
     TokioPostgresDriver { },
     RusqliteDriver { },
-    // TODO: LibsqlDriver { },
+    LibsqlDriver { },
 }
 
 #[tokio::main]
@@ -70,13 +74,8 @@ async fn main() {
             .await
         }
         Subcommands::RltblDriver { driver } => RltblDriver::test(driver, &opts.bench).await,
-        Subcommands::TokioPostgresDriver { } => {
-            eprintln!("Feature 'tokio-postgres' must be installed.");
-            TokioPostgresDriver::test(&opts.bench).await
-        },
-        Subcommands::RusqliteDriver { } => {
-            eprintln!("Feature 'rusqlite' must be installed.");
-            RusqliteDriver::test(&opts.bench).await
-        },
+        Subcommands::TokioPostgresDriver { } => TokioPostgresDriver::test(&opts.bench).await,
+        Subcommands::RusqliteDriver { } => RusqliteDriver::test(&opts.bench).await,
+        Subcommands::LibsqlDriver { } => LibsqlDriver::test(&opts.bench).await,
     };
 }

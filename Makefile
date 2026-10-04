@@ -6,14 +6,14 @@ SHELL := bash
 
 VERSION = v0.1.0
 SEED = 0
-WARMUP = 10
-NOISE_THRESHOLD = 5
+WARMUP = 1
+NOISE_THRESHOLD = 10
 REGRESSION_METRICS = iters-rate,latency-mean
 COMMON_ARGS = --seed $(SEED) --collector silent --warmup $(WARMUP)
 
 SAVE_ARGS = --baseline-dir baselines
-CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD) 
-DRIVER_ARGS = --duration 1m
+CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD) --regression-metrics $(REGRESSION_METRICS)
+DRIVER_ARGS = --duration 1m --noise-threshold $(NOISE_THRESHOLD) --regression-metrics $(REGRESSION_METRICS
 
 baselines:
 	mkdir -p $@
@@ -21,11 +21,9 @@ baselines:
 output:
 	mkdir -p $@
 
-.PHONY: save_baselines save_caching save_tokio_raw save_rusqlite_raw save_rltbl_tokio
+.PHONY: save_baselines save_caching save_tokio_raw save_rusqlite_raw save_libsql_raw save_rltbl_tokio
 
-save_baselines: save_tokio_raw save_rusqlite_raw save_rltbl_tokio save_rltbl_rusqlite save_caching
-
-# TODO: Add libsql
+save_baselines: save_tokio_raw save_rusqlite_raw save_libsql_raw save_rltbl_tokio save_rltbl_rusqlite save_caching
 
 save_tokio_raw: | baselines
 	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
@@ -36,6 +34,11 @@ save_rusqlite_raw: | baselines
 	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
 		--save-baseline driver-rusqlite-raw-$(VERSION) \
 		rusqlite-driver
+
+save_libsql_raw: | baselines
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
+		--save-baseline driver-libsql-raw-$(VERSION) \
+		libsql-driver
 
 save_rltbl_tokio: | baselines
 	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
@@ -79,7 +82,7 @@ save_caching: | baselines
 		--save-baseline caching-postgres-memory-$(VERSION) \
 		caching --totals-file baselines/caching-totals-$(VERSION).json postgres "memory:1000"
 
-.PHONY: tokio_raw rusqlite_raw rltbl_tokio caching
+.PHONY: tokio_raw rusqlite_raw libsql_raw rltbl_tokio rltbl_rusqlite caching
 
 tokio_raw: | baselines output
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
@@ -95,7 +98,12 @@ rusqlite_raw: | baselines output
 		--fail-on-regression \
 		rusqlite-driver
 
-# TODO: libsql
+libsql_raw: | baselines output
+	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
+		--output json --output-file output/driver-libsql-raw-$(VERSION).json \
+		--baseline-file baselines/driver-libsql-raw-$(VERSION).json \
+		--fail-on-regression \
+		libsql-driver
 
 rltbl_tokio: | baselines output
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
