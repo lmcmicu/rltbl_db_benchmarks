@@ -48,18 +48,11 @@ impl BenchSuite for RusqliteDriver {
         eprintln!("Preparing the database.");
         let conn = pool.get().await.unwrap();
         conn.interact(move |conn| {
-            let mut stmt = conn.prepare("DROP TABLE IF EXISTS rltbl_driver").unwrap();
-            let _ = stmt.query([]).unwrap();
-
-            let mut stmt = conn
-                .prepare("CREATE TABLE rltbl_driver (foo INT, bar TEXT)")
-                .unwrap();
-            let _ = stmt.query([]).unwrap();
-
-            let mut stmt = conn
-                .prepare("CREATE VIEW rltbl_driver_view AS SELECT * FROM rltbl_driver")
-                .unwrap();
-            let _ = stmt.query([]).unwrap();
+            let mut sql = String::from(
+                "DROP TABLE IF EXISTS rltbl_driver; \
+                 CREATE TABLE rltbl_driver (foo INT, bar TEXT); \
+                 CREATE VIEW rltbl_driver_view AS SELECT * FROM rltbl_driver;",
+            );
 
             // Add a few tens of thousands of values to the table:
             let mut values = vec![];
@@ -69,13 +62,11 @@ impl BenchSuite for RusqliteDriver {
                 }
             }
             let values = values.join(", ");
-            let mut stmt = conn
-                .prepare(&format!(
-                    "INSERT INTO rltbl_driver (foo, bar) VALUES {}",
-                    values
-                ))
-                .unwrap();
-            let _ = stmt.query([]).unwrap();
+            sql.push_str(&format!(
+                "INSERT INTO rltbl_driver (foo, bar) VALUES {}",
+                values
+            ));
+            conn.execute_batch(&sql).unwrap();
         })
         .await
         .unwrap();
