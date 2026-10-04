@@ -35,11 +35,16 @@ impl BenchSuite for RltblDriver {
 
     /// Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
+        eprintln!(
+            "Connecting to the database using {} at url {}.",
+            self.name, self.url
+        );
         Ok(AnyPool::connect(&self.url).await?)
     }
 
     /// Setup procedure before each worker starts.
     async fn setup(&mut self, pool: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
+        eprintln!("Preparing the database.");
         let table = "rltbl_driver";
         pool.drop_table(table).await?;
 
@@ -114,6 +119,10 @@ impl BenchSuite for RltblDriver {
 
     /// Teardown procedure after each worker finishes.
     async fn teardown(self, _pool: Self::WorkerState, _info: IterInfo) -> Result<()> {
+        eprintln!(
+            "Test is over after {} iterations. Tearing down.",
+            self.tests_run
+        );
         Ok(())
     }
 }
