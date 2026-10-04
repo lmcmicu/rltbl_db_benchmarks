@@ -40,7 +40,10 @@ impl BenchSuite for RltblDriver {
     // use the worker_id. In any case ...
     /// Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
-        eprintln!("Connecting to the database at '{}'.", self.url);
+        eprintln!(
+            "Connecting to the database using {} at '{}'.",
+            self.name, self.url
+        );
         Ok(AnyPool::connect(&self.url).await.unwrap())
     }
 

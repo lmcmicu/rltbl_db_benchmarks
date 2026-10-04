@@ -31,7 +31,7 @@ impl BenchSuite for LibsqlDriver {
     // use the worker_id.
     // Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
-        eprintln!("Connecting to the sqlite database.");
+        eprintln!("Connecting to the sqlite database using {}.", self.name);
         let db = Builder::new_local(":memory:").build().await?;
         let manager = Manager::from_libsql_database(db);
         let pool = Pool::builder(manager).build()?;
@@ -82,7 +82,10 @@ impl BenchSuite for LibsqlDriver {
                    GROUP BY foo \
                    HAVING COUNT(bar) > ?2 \
                    ORDER BY foo";
-        let _ = conn.query(sql, [0, 20]).await.unwrap();
+        let mut rows = conn.query(sql, [0, 20]).await.unwrap();
+        while let Some(_row) = rows.next().await.unwrap() {
+            // Do nothing. The point of this loop is just to consume the iterator.
+        }
 
         if rand::random() && rand::random() {
             let sql = "INSERT INTO rltbl_driver (foo, bar) VALUES (?1, ?2)";

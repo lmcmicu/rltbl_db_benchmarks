@@ -33,7 +33,7 @@ impl BenchSuite for TokioPostgresDriver {
     // use the worker_id.
     // Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
-        eprintln!("Connecting to the postgres database.");
+        eprintln!("Connecting to the postgres database using {}.", self.name);
         let mut cfg = Config::new();
         let db_name = "rltbl_db";
         cfg.dbname = Some(db_name.to_string());

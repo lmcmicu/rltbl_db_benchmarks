@@ -31,7 +31,7 @@ impl BenchSuite for RusqliteDriver {
     // use the worker_id.
     // Initialize the state for a worker
     async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
-        eprintln!("Connecting to the sqlite database.");
+        eprintln!("Connecting to the sqlite database using {}.", self.name);
         let cfg = Config::new(":memory:");
         let pool = cfg.create_pool(Runtime::Tokio1).unwrap();
         Ok(pool)
@@ -85,7 +85,10 @@ impl BenchSuite for RusqliteDriver {
                        HAVING COUNT(bar) > ?2 \
                        ORDER BY foo";
             let mut stmt = conn.prepare(&sql).unwrap();
-            let _ = stmt.query([&0, &20]).unwrap();
+            let mut rows = stmt.query([&0, &20]).unwrap();
+            while let Some(_row) = rows.next().unwrap() {
+                // Do nothing. The point of this loop is just to consume the iterator.
+            }
 
             if rand::random() && rand::random() {
                 let sql = "INSERT INTO rltbl_driver (foo, bar) VALUES (?1, ?2)";
