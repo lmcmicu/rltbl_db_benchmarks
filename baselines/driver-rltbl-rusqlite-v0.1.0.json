@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "driver-rltbl-rusqlite-v0.1.0",
+    "created_at": "2026-10-04T18:16:42.898436177Z",
+    "rlt_version": "0.5.0",
+    "bench_config": {
+      "concurrency": 1,
+      "duration_secs": 60.0,
+      "warmup": 1,
+      "actual_duration_secs": 60.001380953
+    }
+  },
+  "summary": {
+    "success_ratio": 1.0,
+    "total_time": 60.001380953,
+    "concurrency": 1,
+    "iters": {
+      "total": 49,
+      "rate": 0.816647870794548
+    },
+    "items": {
+      "total": 0,
+      "rate": 0.0
+    },
+    "bytes": {
+      "total": 0,
+      "rate": 0.0
+    }
+  },
+  "latency": {
+    "stats": {
+      "min": 1.161822208,
+      "max": 1.172307967,
+      "mean": 1.168552353,
+      "median": 1.169162239,
+      "stdev": 0.001757628
+    },
+    "percentiles": {
+      "p10": 1.1670650870000001,
+      "p25": 1.168113663,
+      "p50": 1.169162239,
+      "p75": 1.170210815,
+      "p90": 1.171259391,
+      "p95": 1.171259391,
+      "p99": 1.172307967,
+      "p99.9": 1.172307967,
+      "p99.99": 1.172307967
+    },
+    "histogram": {
+      "1.162870783": 1,
+      "1.169162239": 31,
+      "1.170210815": 9,
+      "1.171259391": 7,
+      "1.172307967": 1
+    }
+  },
+  "status": {
+    "Success(0)": 49
+  },
+  "errors": {}
+}
