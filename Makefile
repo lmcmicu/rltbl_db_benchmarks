@@ -9,13 +9,10 @@ SEED = 0
 WARMUP = 10
 NOISE_THRESHOLD = 5
 REGRESSION_METRICS = iters-rate,latency-mean
-
 COMMON_ARGS = --seed $(SEED) --collector silent --warmup $(WARMUP)
-BASELINE_ARGS = --baseline-dir baselines
 
+SAVE_ARGS = --baseline-dir baselines
 CACHING_ARGS = --noise-threshold $(NOISE_THRESHOLD) 
-CACHING_BASELINE_ARGS = $(BASELINE_ARGS)
-
 DRIVER_ARGS = --duration 1m
 
 baselines:
@@ -24,9 +21,65 @@ baselines:
 output:
 	mkdir -p $@
 
-.PHONY: caching caching_baselines tokio_raw tokio_raw_save rltbl_tokio rltbl_tokio_save save_baselines
+.PHONY: save_baselines save_caching save_tokio_raw save_rusqlite_raw save_rltbl_tokio
 
-save_baselines: tokio_raw_save rltbl_tokio_save caching_baselines
+save_baselines: save_tokio_raw save_rusqlite_raw save_rltbl_tokio save_rltbl_rusqlite save_caching
+
+# TODO: Add libsql
+
+save_tokio_raw: | baselines
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
+		--save-baseline driver-tokio-postgres-raw-$(VERSION) \
+		tokio-postgres-driver
+
+save_rusqlite_raw: | baselines
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
+		--save-baseline driver-rusqlite-raw-$(VERSION) \
+		rusqlite-driver
+
+save_rltbl_tokio: | baselines
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
+		--save-baseline driver-rltbl-tokio-postgres-$(VERSION) \
+		rltbl-driver tokio-postgres
+
+save_rltbl_rusqlite: | baselines
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
+		--save-baseline driver-rltbl-rusqlite-$(VERSION) \
+		rltbl-driver rusqlite
+
+save_caching: | baselines
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) \
+		--save-baseline caching-sqlite-none-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite none
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) \
+		--save-baseline caching-postgres-none-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres none
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) \
+		--save-baseline caching-sqlite-truncate_all-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite truncate_all
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) \
+		--save-baseline caching-postgres-truncate_all-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres truncate_all
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) \
+		--save-baseline caching-sqlite-truncate-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite truncate
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) \
+		--save-baseline caching-postgres-truncate-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres truncate
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) \
+		--save-baseline caching-sqlite-trigger-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite trigger
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) \
+		--save-baseline caching-postgres-trigger-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres trigger
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) \
+		--save-baseline caching-sqlite-memory-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite "memory:1000"
+	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) \
+		--save-baseline caching-postgres-memory-$(VERSION) \
+		caching --totals-file baselines/caching-totals-$(VERSION).json postgres "memory:1000"
+
+.PHONY: tokio_raw rusqlite_raw rltbl_tokio caching
 
 tokio_raw: | baselines output
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
@@ -35,10 +88,14 @@ tokio_raw: | baselines output
 		--fail-on-regression \
 		tokio-postgres-driver
 
-tokio_raw_save: | baselines
-	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) $(DRIVER_ARGS) \
-		--save-baseline driver-tokio-postgres-raw-$(VERSION) \
-		tokio-postgres-driver
+rusqlite_raw: | baselines output
+	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
+		--output json --output-file output/driver-rusqlite-raw-$(VERSION).json \
+		--baseline-file baselines/driver-rusqlite-raw-$(VERSION).json \
+		--fail-on-regression \
+		rusqlite-driver
+
+# TODO: libsql
 
 rltbl_tokio: | baselines output
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
@@ -47,10 +104,12 @@ rltbl_tokio: | baselines output
 		--fail-on-regression \
 		rltbl-driver tokio-postgres
 
-rltbl_tokio_save: | baselines
-	cargo run -- $(COMMON_ARGS) $(BASELINE_ARGS) $(DRIVER_ARGS) \
-		--save-baseline driver-rltbl-tokio-postgres-$(VERSION) \
-		rltbl-driver tokio-postgres
+rltbl_rusqlite: | baselines output
+	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
+		--output json --output-file output/driver-rltbl-rusqlite-$(VERSION).json \
+		--baseline-file baselines/driver-rltbl-rusqlite-$(VERSION).json \
+		--fail-on-regression \
+		rltbl-driver rusqlite
 
 caching: | baselines output
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
@@ -102,36 +161,4 @@ caching: | baselines output
 		--baseline-file baselines/caching-postgres-memory-$(VERSION).json \
 		--output json --output-file output/caching-postgres-memory-$(VERSION).json \
 		--fail-on-regression \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgres "memory:1000"
-
-caching_baselines: | baselines
-	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-sqlite-none-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite none
-	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-postgres-none-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgres none
-	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-sqlite-truncate_all-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite truncate_all
-	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-postgres-truncate_all-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgres truncate_all
-	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-sqlite-truncate-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite truncate
-	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-postgres-truncate-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgres truncate
-	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-sqlite-trigger-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite trigger
-	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-postgres-trigger-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json postgres trigger
-	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-sqlite-memory-$(VERSION) \
-		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite "memory:1000"
-	cargo run -- $(COMMON_ARGS) $(CACHING_BASELINE_ARGS) \
-		--save-baseline caching-postgres-memory-$(VERSION) \
 		caching --totals-file baselines/caching-totals-$(VERSION).json postgres "memory:1000"
