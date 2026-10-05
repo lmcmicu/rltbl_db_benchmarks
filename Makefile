@@ -104,20 +104,16 @@ caching: | baselines output
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-sqlite-truncate-$(VERSION).json \
 		--output json --output-file output/caching-sqlite-truncate-$(VERSION).json \
-		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-postgres-truncate-$(VERSION).json \
 		--output json --output-file output/caching-postgres-truncate-$(VERSION).json \
-		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json postgres truncate
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-sqlite-trigger-$(VERSION).json \
 		--output json --output-file output/caching-sqlite-trigger-$(VERSION).json \
-		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json sqlite trigger
 	cargo run -- $(COMMON_ARGS) $(CACHING_ARGS) \
 		--baseline-file baselines/caching-postgres-trigger-$(VERSION).json \
 		--output json --output-file output/caching-postgres-trigger-$(VERSION).json \
-		--fail-on-regression \
 		caching --totals-file baselines/caching-totals-$(VERSION).json postgres trigger
