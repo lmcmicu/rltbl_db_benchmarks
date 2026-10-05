@@ -39,7 +39,7 @@ impl CachingPerformance {
 
         // Read in the baselines from a JSON on disk:
         let mut baselines: CachingBaselines = {
-            let baselines = slurp::read_all_to_string(totals_file).unwrap();
+            let baselines = std::fs::read_to_string(totals_file).unwrap();
             serde_json::from_str(&baselines).unwrap()
         };
 

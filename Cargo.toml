@@ -13,7 +13,6 @@ rlt = "0.5.0"
 rltbl_db = { path = ".." }
 serde = "1.0.226"
 serde_json = "1.0.145"
-slurp = "1.0.1"
 tokio = { version = "1.52.3", features = ["full"] }
 deadpool-postgres = { version = "0.14.1", features = ["rt_tokio_1", "serde"] }
 deadpool-sqlite = { version = "0.12.1", features = ["bundled"], }
