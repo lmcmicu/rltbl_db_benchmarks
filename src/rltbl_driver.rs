@@ -16,7 +16,7 @@ impl RltblDriver {
     pub async fn test(name: &str, bench: &BenchCli) {
         let url = match name.to_lowercase().as_str() {
             "tokio" | "tokio-postgres" | "tokio-postgresql" => "postgresql:///rltbl_db",
-            "rusqlite" | "libsql" => ":memory:",
+            "rusqlite" => ":memory:",
             _ => panic!("Invalid driver: '{name}'"),
         };
         let rltbl_driver = RltblDriver {

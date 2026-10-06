@@ -20,9 +20,9 @@ baselines:
 output:
 	mkdir -p $@
 
-.PHONY: save_baselines save_caching save_tokio_raw save_rusqlite_raw save_libsql_raw save_rltbl_tokio
+.PHONY: save_baselines save_caching save_tokio_raw save_rusqlite_raw save_rltbl_tokio
 
-save_baselines: save_tokio_raw save_rusqlite_raw save_libsql_raw save_rltbl_tokio save_rltbl_rusqlite save_caching
+save_baselines: save_tokio_raw save_rusqlite_raw save_rltbl_tokio save_rltbl_rusqlite save_caching
 
 save_tokio_raw: | baselines
 	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
@@ -33,11 +33,6 @@ save_rusqlite_raw: | baselines
 	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
 		--save-baseline driver-rusqlite-raw-$(VERSION) \
 		rusqlite-driver
-
-save_libsql_raw: | baselines
-	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
-		--save-baseline driver-libsql-raw-$(VERSION) \
-		libsql-driver
 
 save_rltbl_tokio: | baselines
 	cargo run -- $(COMMON_ARGS) $(SAVE_ARGS) $(DRIVER_ARGS) \
@@ -63,7 +58,7 @@ save_caching: | baselines
 		--save-baseline caching-postgres-trigger-$(VERSION) \
 		caching --totals-file baselines/caching-totals-$(VERSION).json postgres trigger
 
-.PHONY: tokio_raw rusqlite_raw libsql_raw rltbl_tokio rltbl_rusqlite caching
+.PHONY: tokio_raw rusqlite_raw rltbl_tokio rltbl_rusqlite caching
 
 tokio_raw: | baselines output
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
@@ -78,13 +73,6 @@ rusqlite_raw: | baselines output
 		--baseline-file baselines/driver-rusqlite-raw-$(VERSION).json \
 		--fail-on-regression \
 		rusqlite-driver
-
-libsql_raw: | baselines output
-	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
-		--output json --output-file output/driver-libsql-raw-$(VERSION).json \
-		--baseline-file baselines/driver-libsql-raw-$(VERSION).json \
-		--fail-on-regression \
-		libsql-driver
 
 rltbl_tokio: | baselines output
 	cargo run -- $(COMMON_ARGS) $(DRIVER_ARGS) \
