@@ -44,7 +44,7 @@ enum Subcommands {
         #[clap(long, default_value = "")]
         totals_file: String,
     },
-    /// Tests query performance using rltbl_db's generic driver:
+    /// Tests query performance using rltbl_db's generic driver.
     RltblDriver {
         #[clap(default_value = "rusqlite")]
         driver: String,
