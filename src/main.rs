@@ -1,3 +1,5 @@
+//! Command line interface for rltbl_db regression tests.
+
 use clap::{Parser, Subcommand};
 use rlt::cli::BenchCli;
 
@@ -7,11 +9,12 @@ use caching_performance::CachingPerformance;
 mod rltbl_driver;
 use rltbl_driver::RltblDriver;
 
+mod tokio_postgres_driver;
+use tokio_postgres_driver::TokioPostgresDriver;
+
 mod rusqlite_driver;
 use rusqlite_driver::RusqliteDriver;
 
-mod tokio_postgres_driver;
-use tokio_postgres_driver::TokioPostgresDriver;
 
 #[derive(Parser, Clone)]
 struct Opts {
@@ -27,6 +30,7 @@ struct Opts {
 
 #[derive(Clone, Subcommand)]
 enum Subcommands {
+    /// Tests caching performance.
     Caching {
         #[clap(default_value = "sqlite")]
         kind: String,
@@ -40,13 +44,15 @@ enum Subcommands {
         #[clap(long, default_value = "")]
         totals_file: String,
     },
+    /// Tests query performance using rltbl_db's generic driver:
     RltblDriver {
         #[clap(default_value = "rusqlite")]
         driver: String,
     },
+    /// Tests query performance using deadpool's tokio-postgres driver directly.
     TokioPostgresDriver { },
+    /// Tests query performance using deadpool's rusqlite driver directly.
     RusqliteDriver { },
-    // TODO: LibsqlDriver { },
 }
 
 #[tokio::main]
@@ -59,7 +65,7 @@ async fn main() {
             edit_rate,
             totals_file,
         } => {
-            CachingPerformance::perform_caching(
+            CachingPerformance::test(
                 &kind,
                 &opts.bench,
                 strategy,
@@ -72,5 +78,5 @@ async fn main() {
         Subcommands::RltblDriver { driver } => RltblDriver::test(driver, &opts.bench).await,
         Subcommands::TokioPostgresDriver { } => TokioPostgresDriver::test(&opts.bench).await,
         Subcommands::RusqliteDriver { } => RusqliteDriver::test(&opts.bench).await,
-    }
+    };
 }

@@ -1,3 +1,5 @@
+//! Regression test for querying using the tokio-postgres driver directly.
+
 use anyhow::Result;
 use async_trait::async_trait;
 use deadpool_postgres::{Config, Pool, Runtime, tokio_postgres::NoTls};
@@ -6,34 +8,54 @@ use std::time::Instant;
 
 #[derive(Clone)]
 pub(crate) struct TokioPostgresDriver {
-    pool: Pool,
+    name: &'static str,
+    tests_run: usize,
 }
 
 impl TokioPostgresDriver {
-    async fn new() -> Self {
+    pub async fn test(bench: &BenchCli) {
+        let tokio_postgres_driver = TokioPostgresDriver {
+            name: "tokio_postgres_driver",
+            tests_run: 0,
+        };
+        rlt::cli::run(bench.clone(), tokio_postgres_driver)
+            .await
+            .unwrap();
+    }
+}
+
+#[async_trait]
+impl BenchSuite for TokioPostgresDriver {
+    type WorkerState = Pool;
+
+    /// Initialize the state for a worker
+    async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
+        eprintln!("Connecting to the postgres database using {}.", self.name);
         let mut cfg = Config::new();
         let db_name = "rltbl_db";
         cfg.dbname = Some(db_name.to_string());
-        let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
+        let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls)?;
+        Ok(pool)
+    }
 
-        let client = pool.get().await.unwrap();
+    /// Setup procedure before each worker starts.
+    async fn setup(&mut self, pool: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
+        eprintln!("Preparing the database.");
+        let client = pool.get().await?;
         let stmt = client
             .prepare("DROP TABLE IF EXISTS rltbl_driver CASCADE")
-            .await
-            .unwrap();
-        let _ = client.query(&stmt, &[]).await.unwrap();
+            .await?;
+        let _ = client.query(&stmt, &[]).await?;
 
         let stmt = client
             .prepare("CREATE TABLE rltbl_driver (foo INT, bar TEXT)")
-            .await
-            .unwrap();
-        let _ = client.query(&stmt, &[]).await.unwrap();
+            .await?;
+        let _ = client.query(&stmt, &[]).await?;
 
         let stmt = client
             .prepare("CREATE VIEW rltbl_driver_view AS SELECT * FROM rltbl_driver")
-            .await
-            .unwrap();
-        let _ = client.query(&stmt, &[]).await.unwrap();
+            .await?;
+        let _ = client.query(&stmt, &[]).await?;
 
         // Add a few tens of thousands of values to the table:
         let mut values = vec![];
@@ -48,74 +70,36 @@ impl TokioPostgresDriver {
                 "INSERT INTO rltbl_driver (foo, bar) VALUES {}",
                 values
             ))
-            .await
-            .unwrap();
-        let _ = client.query(&stmt, &[]).await.unwrap();
-        Self { pool }
-    }
-
-    pub async fn test(bench: &BenchCli) {
-        let driver = TokioPostgresDriver::new().await;
-        rlt::cli::run(bench.clone(), driver).await.unwrap();
-    }
-}
-
-#[async_trait]
-impl BenchSuite for TokioPostgresDriver {
-    type WorkerState = String;
-
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is initialize the state for all of the workers.
-    // That said, maybe what needs to be done to get a per-worker state is to somehow
-    // use the worker_id.
-    // Initialize the state for a worker
-    async fn state(&self, _worker_id: u32) -> Result<Self::WorkerState> {
-        Ok("Good".to_string())
-    }
-
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is to run the setup procedure for all of the workers (as judged by the
-    // number of rows observed in each of the four tables once the test is running), i.e.,
-    // before any of them run.
-    // That said, maybe what needs to be done to get a per-worker setup is to somehow
-    // use the worker_id.
-    // Setup procedure before each worker starts.
-    async fn setup(&mut self, _: &mut Self::WorkerState, _worker_id: u32) -> Result<()> {
+            .await?;
+        let _ = client.query(&stmt, &[]).await?;
         Ok(())
     }
 
-    // The comment below is from the source code for the trait in rlt, but I think what it
-    // actually does is to run the teardown procedure for all of the workers, i.e., after they
-    // are all done.
-    // That said, maybe what needs to be done to get a per-worker teardown is to somehow
-    // use the worker_id.
-    // Teardown procedure after each worker finishes.
-    async fn teardown(self, _: Self::WorkerState, _info: IterInfo) -> Result<()> {
-        Ok(())
-    }
-
-    async fn bench(&mut self, _: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
+    /// Run the test.
+    async fn bench(&mut self, pool: &mut Self::WorkerState, _: &IterInfo) -> Result<IterReport> {
         let start = Instant::now();
 
-        let client = self.pool.get().await.unwrap();
+        let client = pool.get().await?;
         let sql = "SELECT foo, bar \
                    FROM rltbl_driver_view \
                    WHERE foo > $1 \
                    ORDER BY foo";
-        let stmt = client.prepare(&sql).await.unwrap();
-        let rows = client.query(&stmt, &[&0_i32]).await.unwrap();
+        let stmt = client.prepare(&sql).await?;
+        let rows = client.query(&stmt, &[&0_i32]).await?;
 
+        // Consume the iterator:
         for row in rows.iter() {
             let _ = row.try_get::<usize, Option<i32>>(0).unwrap().unwrap();
         }
 
         if rand::random() && rand::random() {
             let sql = "INSERT INTO rltbl_driver (foo, bar) VALUES ($1, $2)";
-            let stmt = client.prepare(&sql).await.unwrap();
-            let _ = client.query(&stmt, &[&1_i32, &"1"]).await.unwrap();
+            let stmt = client.prepare(&sql).await?;
+            let _ = client.query(&stmt, &[&1_i32, &"1"]).await?;
         }
 
         let duration = start.elapsed();
+        self.tests_run += 1;
 
         Ok(IterReport {
             duration,
@@ -124,5 +108,14 @@ impl BenchSuite for TokioPostgresDriver {
             items: 0,
             bytes: 0,
         })
+    }
+
+    // Teardown procedure after each worker finishes.
+    async fn teardown(self, _pool: Self::WorkerState, _info: IterInfo) -> Result<()> {
+        eprintln!(
+            "Test is over after {} iterations. Tearing down.",
+            self.tests_run
+        );
+        Ok(())
     }
 }

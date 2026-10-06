@@ -1,24 +1,22 @@
 [package]
-name = "rltbl_db_benchmark"
+name = "rltbl_db_benchmarks"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.102"
+anyhow = "1.0.100"
 async-trait = "0.1.89"
 clap = "4.6.1"
 indexmap = { version = "2.12.0" }
-rand = "0.10.1"
+rand = "0.9.2"
 rlt = "0.5.0"
-# TODO: Get this dependency from crates.io:
-rltbl_db = { git = "https://github.com/rltbl/rltbl_db", branch = "main" }
-serde = "1.0.228"
-serde_json = "1.0.150"
-slurp = "1.0.1"
+rltbl_db = { path = ".." }
+serde = "1.0.226"
+serde_json = "1.0.145"
 tokio = { version = "1.52.3", features = ["full"] }
 deadpool-postgres = { version = "0.14.1", features = ["rt_tokio_1", "serde"] }
 deadpool-sqlite = { version = "0.12.1", features = ["bundled"], }
 
 [[bin]]
-name = "rltbl_db_benchmark"
+name = "rltbl_db_benchmarks"
 path = "src/main.rs"
