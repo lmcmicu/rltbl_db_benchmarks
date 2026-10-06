@@ -1,3 +1,5 @@
+//! Regression test for query performance using rltbl_db's builtin generic driver.
+
 use anyhow::Result;
 use async_trait::async_trait;
 use rand;

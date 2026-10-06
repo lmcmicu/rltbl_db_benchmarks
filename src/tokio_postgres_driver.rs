@@ -1,3 +1,5 @@
+//! Regression test for querying using the tokio-postgres driver directly.
+
 use anyhow::Result;
 use async_trait::async_trait;
 use deadpool_postgres::{Config, Pool, Runtime, tokio_postgres::NoTls};

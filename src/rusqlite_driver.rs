@@ -1,3 +1,5 @@
+//! Regression test for querying using the rusqlite driver directly.
+
 use anyhow::Result;
 use async_trait::async_trait;
 use deadpool_sqlite::{Config, Pool, Runtime};

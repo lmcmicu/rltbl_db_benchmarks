@@ -1,3 +1,5 @@
+//! Command line interface for rltbl_db regression tests.
+
 use clap::{Parser, Subcommand};
 use rlt::cli::BenchCli;
 
@@ -28,6 +30,7 @@ struct Opts {
 
 #[derive(Clone, Subcommand)]
 enum Subcommands {
+    /// Tests caching performance.
     Caching {
         #[clap(default_value = "sqlite")]
         kind: String,
@@ -41,11 +44,14 @@ enum Subcommands {
         #[clap(long, default_value = "")]
         totals_file: String,
     },
+    /// Tests query performance using rltbl_db's generic driver:
     RltblDriver {
         #[clap(default_value = "rusqlite")]
         driver: String,
     },
+    /// Tests query performance using deadpool's tokio-postgres driver directly.
     TokioPostgresDriver { },
+    /// Tests query performance using deadpool's rusqlite driver directly.
     RusqliteDriver { },
 }
 

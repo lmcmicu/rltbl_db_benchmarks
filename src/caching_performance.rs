@@ -1,3 +1,5 @@
+//! Regression test for caching performance.
+
 use anyhow::Result;
 use async_trait::async_trait;
 use rand::{
