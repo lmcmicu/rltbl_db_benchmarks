@@ -1,6 +1,6 @@
 # rltbl/rltbl_db_benchmarks
 
-Regression tests for [rltbl_db](https://github.com/rltbl/rltbl_db_benchmarks)
+Regression tests for [rltbl_db](https://github.com/rltbl/rltbl_db)
 
 # Usage
 
